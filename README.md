@@ -62,6 +62,9 @@ using(var array2 = array.Where(x => x >= 5).ToUnmanagedArray()) {
 
 However, you have to release them explicitly ( by ```using``` scope or ```Free()``` ).
 
+## License
+
+This is under MIT license.
 
 ## Author
 
