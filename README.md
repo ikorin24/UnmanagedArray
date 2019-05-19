@@ -6,7 +6,7 @@ This is the library by which you can use unmanaged array in C#.
 
 Array in C# is allocated in managed memory.
 
-```UnmanagedArray<T>``` whith this library supports are allocated in unmanaged memory.
+```UnmanagedArray<T>``` this library supports are allocated in unmanaged memory.
 
 In other words, items in ```UnmanagedArray<T>``` is not collected by Garbage Collection.
 
