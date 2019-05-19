@@ -12,7 +12,7 @@ In other words, items in ```UnmanagedArray<T>``` is not collected by Garbage Col
 
 ### Supported Types
 
-The only type of item this library supported is ```unmanaged``` type.
+The only type of item this library supports is ```unmanaged``` type.
 
 ```unmanaged``` type is '```int```', '```float```', recursive-unmanaged struct, and so on. 
 
