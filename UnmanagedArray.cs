@@ -26,6 +26,7 @@ SOFTWARE.
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -59,6 +60,9 @@ namespace Elffy.Effective
         /// <summary>Get the type of an item in this array.</summary>
         public Type Type => typeof(T);
 
+        /// <summary>Pointer address of this array.</summary>
+        public IntPtr Ptr => _array;
+
         /// <summary>Get the specific item of specific index.</summary>
         /// <param name="i">index</param>
         /// <returns>The item of specific index</returns>
@@ -66,6 +70,7 @@ namespace Elffy.Effective
         {
             get
             {
+                if(i < 0 || i >= _length) { throw new IndexOutOfRangeException(); }
                 if(IsThreadSafe) {
                     lock(_syncRoot) {
                         ThrowIfFree();
@@ -83,6 +88,7 @@ namespace Elffy.Effective
             }
             set
             {
+                if(i < 0 || i >= _length) { throw new IndexOutOfRangeException(); }
                 if(IsThreadSafe) {
                     lock(_syncRoot) {
                         ThrowIfFree();
@@ -104,6 +110,7 @@ namespace Elffy.Effective
         public int Length => _length;
 
         /// <summary>Length of this array (ICollection implementation)</summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public int Count => _length;
 
         /// <summary>Get wheater this array is readonly.</summary>
@@ -116,7 +123,7 @@ namespace Elffy.Effective
         /// <param name="length">Length of array</param>
         public UnmanagedArray(int length, bool threadSafe)
         {
-            if(length < 0) { throw new InvalidOperationException(); }
+            if(length < 0) { throw new ArgumentException(); }
             IsThreadSafe = threadSafe;
             if(threadSafe) {
                 _syncRoot = new object();
@@ -201,26 +208,61 @@ namespace Elffy.Effective
         /// <param name="index"></param>
         /// <param name="item"></param>
         [Obsolete("This method is not supported.", true)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public void Insert(int index, T item) => throw new NotSupportedException();
 
         /// <summary>Not Supported in this class.</summary>
         /// <param name="index"></param>
         [Obsolete("This method is not supported.", true)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public void RemoveAt(int index) => throw new NotSupportedException();
 
         /// <summary>Not Supported in this class.</summary>
         /// <param name="item"></param>
         [Obsolete("This method is not supported.", true)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public void Add(T item) => throw new NotSupportedException();
 
         /// <summary>Not Supported in this class.</summary>
         [Obsolete("This method is not supported.", true)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public bool Remove(T item) => throw new NotSupportedException();
 
         /// <summary>Not Supported in this class.</summary>
         [Obsolete("This method is not supported.", true)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public void Clear() => throw new NotSupportedException();
         #endregion
+
+        /// <summary>Copy from unmanaged.</summary>
+        /// <param name="source">unmanaged source pointer</param>
+        /// <param name="start">start index of destination. (destination is this instance.)</param>
+        /// <param name="length">count of copied item. (NOT length of bytes.)</param>
+        public unsafe void CopyFrom(IntPtr source, int start, int length)
+        {
+            if(source == IntPtr.Zero) { throw new ArgumentNullException("source is null"); }
+            ThrowIfFree();
+            if(start < 0 || length < 0) { throw new ArgumentOutOfRangeException(); }
+            if(start + length > Length) { throw new ArgumentOutOfRangeException(); }
+            if(IsThreadSafe) {
+                lock(_syncRoot) {
+                    for(int i = 0; i < length; i++) {
+                        var ptr = _array + (start + i) * _objsize;
+                        var value = *(T*)(source + i * _objsize);
+                        Marshal.StructureToPtr<T>(value, ptr, true);
+                    }
+                    _version++;
+                }
+            }
+            else {
+                for(int i = 0; i < length; i++) {
+                    var ptr = _array + (start + i) * _objsize;
+                    var value = *(T*)(source + i * _objsize);
+                    Marshal.StructureToPtr<T>(value, ptr, true);
+                }
+                _version++;
+            }
+        }
 
         #region Dispose
         public void Dispose()
@@ -285,7 +327,8 @@ namespace Elffy.Effective
 
             object IEnumerator.Current
             {
-                get {
+                get
+                {
                     if(_index == 0 || _index == _array._length + 1) {
                         throw new InvalidOperationException();
                     }
@@ -312,7 +355,7 @@ namespace Elffy.Effective
         /// <typeparam name="T">Type of item in array</typeparam>
         /// <param name="source">source which initializes new array.</param>
         /// <returns>instance of <see cref="UnmanagedArray{T}"/></returns>
-        public static UnmanagedArray<T> ToUnmanagedArray<T>(this IEnumerable<T> source) where T : unmanaged 
+        public static UnmanagedArray<T> ToUnmanagedArray<T>(this IEnumerable<T> source) where T : unmanaged
             => ToUnmanagedArray(source, false);
 
         /// <summary>Create a new instance of <see cref="UnmanagedArray{T}"/> initialized by source.</summary>
@@ -326,8 +369,7 @@ namespace Elffy.Effective
             var len = source.Count();
             var array = new UnmanagedArray<T>(len, threadSafe);
             var i = 0;
-            foreach (var item in source)
-            {
+            foreach(var item in source) {
                 array[i++] = item;
             }
             return array;
@@ -343,7 +385,8 @@ namespace Elffy.Effective
         [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
         public T[] Items
         {
-            get {
+            get
+            {
                 var items = new T[_entity.Length];
                 _entity.CopyTo(items, 0);
                 return items;
