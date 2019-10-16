@@ -196,8 +196,10 @@ namespace Elffy.Effective
             if(array == null) { throw new ArgumentNullException(nameof(array)); }
             if(arrayIndex + _length > array.Length) { throw new ArgumentException("There is not enouph length of destination array"); }
             unsafe {
-                for(int i = 0; i < _length; i++) {
-                    array[i + arrayIndex] = this[i];
+                fixed (T* arrayPtr = array) {
+                    var byteLen = (long)(_length * _objsize);
+                    var dest = new IntPtr(arrayPtr) + arrayIndex * _objsize;
+                    Buffer.MemoryCopy((void*)_array, (void*)dest, byteLen, byteLen);
                 }
             }
         }
@@ -246,20 +248,14 @@ namespace Elffy.Effective
             if(start + length > Length) { throw new ArgumentOutOfRangeException(); }
             if(IsThreadSafe) {
                 lock(_syncRoot) {
-                    for(int i = 0; i < length; i++) {
-                        var ptr = _array + (start + i) * _objsize;
-                        var value = *(T*)(source + i * _objsize);
-                        Marshal.StructureToPtr<T>(value, ptr, true);
-                    }
+                    var byteLen = (long)(length * _objsize);
+                    Buffer.MemoryCopy((void*)source, (void*)(_array + start * _objsize), byteLen, byteLen);
                     _version++;
                 }
             }
             else {
-                for(int i = 0; i < length; i++) {
-                    var ptr = _array + (start + i) * _objsize;
-                    var value = *(T*)(source + i * _objsize);
-                    Marshal.StructureToPtr<T>(value, ptr, true);
-                }
+                var byteLen = (long)(length * _objsize);
+                Buffer.MemoryCopy((void*)source, (void*)(_array + start * _objsize), byteLen, byteLen);
                 _version++;
             }
         }
