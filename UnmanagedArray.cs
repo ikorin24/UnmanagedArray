@@ -362,11 +362,13 @@ namespace Elffy.Effective
         public static UnmanagedArray<T> ToUnmanagedArray<T>(this IEnumerable<T> source, bool threadSafe) where T : unmanaged
         {
             if(source == null) { throw new ArgumentNullException(); }
-            var len = source.Count();
+            var managedArray = (source is T[]) ? (T[])source : source.ToArray();
+            var len = managedArray.Length;
             var array = new UnmanagedArray<T>(len, threadSafe);
-            var i = 0;
-            foreach(var item in source) {
-                array[i++] = item;
+            unsafe {
+                fixed(T* ptr = managedArray) {
+                    array.CopyFrom((IntPtr)ptr, 0, len);
+                }
             }
             return array;
         }
