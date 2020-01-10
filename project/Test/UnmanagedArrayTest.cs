@@ -134,11 +134,11 @@ namespace Test
             };
             using(var array = UnmanagedArray<uint>.CreateFromStruct(ref data)) {
                 Assert.Equal<uint>(10, array[0]);
-                Assert.Equal<uint>(5 , array[1]);
+                Assert.Equal<uint>(5, array[1]);
                 Assert.Equal<uint>(90, array[2]);
                 Assert.Equal<uint>(32, array[3]);
                 Assert.Equal<uint>(50, array[4]);
-                Assert.Equal<uint>(0xEEFF0011,array[5]);
+                Assert.Equal<uint>(0xEEFF0011, array[5]);
                 Assert.Equal<uint>(0xAABBCCDD, array[6]);
             }
         }
