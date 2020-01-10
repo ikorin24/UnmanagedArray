@@ -4,24 +4,12 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Linq;
+using System.Collections;
 
 namespace Test
 {
     public class UnmanagedArrayTest
     {
-        [Fact]
-        public void ReadWrite()
-        {
-            var array = new UnmanagedArray<int>(100);
-            for(int i = 0; i < array.Length; i++) {
-                array[i] = i * i;
-            }
-            for(int i = 0; i < array.Length; i++) {
-                Assert.Equal(array[i], i * i);
-            }
-            array.Dispose();
-        }
-
         [Fact]
         public void Exception()
         {
@@ -30,17 +18,84 @@ namespace Test
                 Assert.Throws<IndexOutOfRangeException>(() => array[-8]);
                 Assert.Throws<IndexOutOfRangeException>(() => array[array.Length] = 9);
                 Assert.Throws<IndexOutOfRangeException>(() => array[array.Length]);
+
+                // CopyTo
+                Assert.Throws<ArgumentNullException>(() => array.CopyTo(null!, 0));
+                Assert.Throws<ArgumentOutOfRangeException>(() => array.CopyTo(new int[array.Length], -1));
+                Assert.Throws<ArgumentOutOfRangeException>(() => array.CopyTo(new int[array.Length], array.Length));
+                Assert.Throws<ArgumentException>(() => array.CopyTo(new int[array.Length], 10));        // not enough length of destination
+                Assert.Throws<ArgumentException>(() => array.CopyTo(new int[100], 0));                  // not enough length of destination
+
+                // NotSupported methods
+                Assert.Throws<NotSupportedException>(() => (array as IList<int>).Insert(0, 0));
+                Assert.Throws<NotSupportedException>(() => (array as IList<int>).RemoveAt(0));
+                Assert.Throws<NotSupportedException>(() => (array as ICollection<int>).Add(0));
+                Assert.Throws<NotSupportedException>(() => (array as ICollection<int>).Remove(0));
+                Assert.Throws<NotSupportedException>(() => (array as ICollection<int>).Clear());
+                Assert.Throws<NotSupportedException>(() => (array as IList).Add(0));
+                Assert.Throws<NotSupportedException>(() => (array as IList).Clear());
+                Assert.Throws<NotSupportedException>(() => (array as IList).Insert(0, 0));
+                Assert.Throws<NotSupportedException>(() => (array as IList).Remove(0));
+                Assert.Throws<NotSupportedException>(() => (array as IList).RemoveAt(0));
             }
             Assert.Throws<ArgumentOutOfRangeException>(() => new UnmanagedArray<bool>(-4));
         }
 
         [Fact]
-        public void ArrayLen()
+        public void Ptr()
         {
-            for(int i = 0; i < 50; i++) {
-                using(var array = new UnmanagedArray<short>(i)) {
+            using(var array = new UnmanagedArray<short>(0)) {
+                Assert.NotEqual(array.Ptr, IntPtr.Zero);
+            }
+            using(var array = new UnmanagedArray<double>(10)) {
+                Assert.NotEqual(array.Ptr, IntPtr.Zero);
+            }
+        }
+
+        [Fact]
+        public void Length()
+        {
+            for(int i = 0; i < 1000; i++) {
+                using(var array = new UnmanagedArray<ulong>(i)) {
                     Assert.Equal(array.Length, i);
                 }
+            }
+        }
+
+        [Fact]
+        public void Indexer()
+        {
+            using(var array = new UnmanagedArray<int>(100)) {
+                for(int i = 0; i < array.Length; i++) {
+                    array[i] = i * i;
+                }
+                for(int i = 0; i < array.Length; i++) {
+                    Assert.Equal(array[i], i * i);
+                }
+            }
+
+            using(var array = new UnmanagedArray<int>(10)) {
+                for(int i = 0; i < array.Length; i++) {
+                    array[i] = i;
+                }
+                for(int i = 0; i < array.Length; i++) {
+                    Assert.Equal(i, (array as IList)[i]);
+                }
+            }
+        }
+
+        [Fact]
+        public void OtherProperties()
+        {
+            using(var array = new UnmanagedArray<decimal>(30)) {
+                Assert.True((array as ICollection<decimal>).IsReadOnly);
+                Assert.False((array as IList).IsReadOnly);
+                Assert.True((array as IList).IsFixedSize);
+                Assert.Equal(30, (array as ICollection<decimal>).Count);
+                Assert.Equal(30, (array as IReadOnlyCollection<decimal>).Count);
+                Assert.Equal(30, (array as ICollection).Count);
+                Assert.NotNull((array as ICollection).SyncRoot);
+                Assert.False((array as ICollection).IsSynchronized);
             }
         }
 
@@ -49,8 +104,36 @@ namespace Test
         {
             var array = new UnmanagedArray<float>(10);
             array.Dispose();
+            Assert.True(array.IsDisposed);
             Assert.Throws<ObjectDisposedException>(() => array[0] = 34f);
             Assert.Throws<ObjectDisposedException>(() => array[3]);
+            Assert.Throws<ObjectDisposedException>(() => array.Ptr);
+            Assert.Throws<ObjectDisposedException>(() => ((ICollection<float>)array).Count);
+            Assert.Throws<ObjectDisposedException>(() => ((IReadOnlyCollection<float>)array).Count);
+            Assert.Throws<ObjectDisposedException>(() => ((ICollection)array).Count);
+            Assert.Throws<ObjectDisposedException>(() => ((IList)array)[0]);
+            Assert.Throws<ObjectDisposedException>(() => ((IList)array)[0] = 0f);
+            Assert.Throws<ObjectDisposedException>(() => array.GetEnumerator());
+            Assert.Throws<ObjectDisposedException>(() => ((IEnumerable)array).GetEnumerator());
+            Assert.Throws<ObjectDisposedException>(() => ((IEnumerable<float>)array).GetEnumerator());
+            Assert.Throws<ObjectDisposedException>(() => array.IndexOf(0f));
+            Assert.Throws<ObjectDisposedException>(() => array.Contains(0f));
+            Assert.Throws<ObjectDisposedException>(() => array.CopyTo(new float[10], 0));
+            Assert.Throws<ObjectDisposedException>(() => array.GetPtrIndexOf(0));
+            Assert.Throws<ObjectDisposedException>(() =>
+            {
+                using var array2 = new UnmanagedArray<float>(array.Length);
+                array.CopyFrom(array2.Ptr, 0, array2.Length);
+            });
+            Assert.Throws<ObjectDisposedException>(() => array.CopyFrom(new UnmanagedArray<float>(10)));
+            Assert.Throws<ObjectDisposedException>(() =>
+            {
+                var span = new Span<float>();
+                array.CopyFrom(span, 0);
+            });
+            Assert.Throws<ObjectDisposedException>(() => array.AsSpan());
+
+
             array.Dispose();        // No exception although already disposed
         }
 
@@ -105,8 +188,8 @@ namespace Test
             using(var array = Enumerable.Range(10, 10).ToUnmanagedArray())
             using(var array2 = new UnmanagedArray<int>(array.Length)) {
                 Assert.Equal(4, array.IndexOf(14));
-                Assert.DoesNotContain(179, array);
-                Assert.Contains(16, array);
+                Assert.False(array.Contains(179));
+                Assert.True(array.Contains(16));
 
                 var copy = new int[array.Length + 5];
                 array.CopyTo(copy, 5);

@@ -74,11 +74,19 @@ namespace System.Collections.Generic
         /// <summary>Get length of this array</summary>
         public int Length { get { ThrowIfDisposed(); return _length; } }
 
-        bool ICollection<T>.IsReadOnly => false;
+
+        // *** NOTICE ***
+        // T[] a = new T[10];
+        // (a as ICollection<T>).IsReadOnly   ----> true
+        // (a as IList).IsReadOnly   ----> false
+        // 
+        // ↓ I copied thier values of the properties.
+
+        bool ICollection<T>.IsReadOnly => true;
 
         bool IList.IsReadOnly => false;
 
-        bool IList.IsFixedSize => false;
+        bool IList.IsFixedSize => true;
 
         int ICollection<T>.Count { get { ThrowIfDisposed(); return _length; } }
 
@@ -109,9 +117,9 @@ namespace System.Collections.Generic
             }
         }
 
-        /// <summary>Create new <see cref="UnmanagedArray{T}"/>, those elements are copied from <see cref="Span{T}"/>.</summary>
-        /// <param name="span">Elements of the <see cref="UnmanagedArray{T}"/> are initialized by this <see cref="Span{T}"/>.</param>
-        public unsafe UnmanagedArray(Span<T> span)
+        /// <summary>Create new <see cref="UnmanagedArray{T}"/>, those elements are copied from <see cref="ReadOnlySpan{T}"/>.</summary>
+        /// <param name="span">Elements of the <see cref="UnmanagedArray{T}"/> are initialized by this <see cref="ReadOnlySpan{T}"/>.</param>
+        public unsafe UnmanagedArray(ReadOnlySpan<T> span)
         {
             var objsize = sizeof(T);
             _array = Marshal.AllocHGlobal(span.Length * objsize);
@@ -183,6 +191,7 @@ namespace System.Collections.Generic
         {
             ThrowIfDisposed();
             if(array == null) { throw new ArgumentNullException(nameof(array)); }
+            if((uint)arrayIndex >= (uint)array.Length) { throw new ArgumentOutOfRangeException(nameof(arrayIndex)); }
             if(arrayIndex + _length > array.Length) { throw new ArgumentException("There is not enouph length of destination array"); }
             unsafe {
                 var objsize = sizeof(T);
@@ -223,10 +232,14 @@ namespace System.Collections.Generic
             _version++;
         }
 
-        /// <summary>Copy from <see cref="Span{T}"/>.</summary>
-        /// <param name="source"><see cref="Span{T}"/> object.</param>
+        /// <summary>Copy fron <see cref="UnmanagedArray{T}"/>.</summary>
+        /// <param name="array">source array of type <see cref="UnmanagedArray{T}"/></param>
+        public void CopyFrom(UnmanagedArray<T> array) => CopyFrom(array.Ptr, 0, array.Length);
+
+        /// <summary>Copy from <see cref="ReadOnlySpan{T}"/>.</summary>
+        /// <param name="source"><see cref="ReadOnlySpan{T}"/> object.</param>
         /// <param name="start">start index of destination. (destination is this <see cref="UnmanagedArray{T}"/>.)</param>
-        public unsafe void CopyFrom(Span<T> source, int start)
+        public unsafe void CopyFrom(ReadOnlySpan<T> source, int start)
         {
             ThrowIfDisposed();
             if(start < 0) { throw new ArgumentOutOfRangeException(); }
