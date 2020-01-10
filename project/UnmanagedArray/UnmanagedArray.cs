@@ -51,6 +51,13 @@ namespace System.Collections.Generic
         /// <summary>Get <see cref="UnmanagedArray{T}"/> is disposed.</summary>
         public bool IsDisposed => _disposed;
 
+        /// <summary>
+        /// [CAUTION] This is only for performance in case of internal access.<para/>
+        /// This may cause violational access to memory!!!!!<para/>
+        /// Access to private fields directly without any checking.<para/>
+        /// </summary>
+        internal InternalDirectAccessor DirectAccessor => new InternalDirectAccessor(this);
+
         /// <summary>Get the specific item of specific index.</summary>
         /// <param name="i">index</param>
         /// <returns>The item of specific index</returns>
@@ -264,6 +271,7 @@ namespace System.Collections.Generic
         public unsafe void CopyFrom(IntPtr source, int start, int length)
         {
             ThrowIfDisposed();
+            if(length == 0) { return; }
             if(source == IntPtr.Zero) { throw new ArgumentNullException("source is null"); }
             if(start < 0 || length < 0) { throw new ArgumentOutOfRangeException(); }
             if(start + length > _length) { throw new ArgumentOutOfRangeException(); }
@@ -450,6 +458,34 @@ namespace System.Collections.Generic
                 Current = default;
             }
         }
+
+        /// <summary>
+        /// [CAUTION] This struct is only for performance in case of internal access.<para/>
+        /// This may cause violational access to memory!!!!!<para/>
+        /// Access to private fields directly without any checking.<para/>
+        /// </summary>
+        internal struct InternalDirectAccessor
+        {
+            private readonly UnmanagedArray<T> _instance;
+            internal int Length => _instance._length;
+            internal IntPtr Ptr => _instance._array;
+
+            internal unsafe T GetItem(int i) => ((T*)_instance._array)[i];
+            internal unsafe void SetItem(int i, T value)
+            {
+                ((T*)_instance._array)[i] = value;
+                _instance._version++;
+            }
+
+            internal unsafe void CopyFrom(IntPtr source, int start, int length)
+            {
+                var objsize = sizeof(T);
+                var byteLen = (long)(length * objsize);
+                Buffer.MemoryCopy((void*)source, (void*)(_instance._array + start * objsize), byteLen, byteLen);
+                _instance._version++;
+            }
+            internal InternalDirectAccessor(UnmanagedArray<T> instance) => _instance = instance;
+        }
     }
 
     public static class UnmanagedArrayExtension
@@ -460,16 +496,48 @@ namespace System.Collections.Generic
         /// <returns>instance of <see cref="UnmanagedArray{T}"/></returns>
         public static UnmanagedArray<T> ToUnmanagedArray<T>(this IEnumerable<T> source) where T : unmanaged
         {
-            if(source == null) { throw new ArgumentNullException(); }
-            var managedArray = (source is T[] a) ? a : source.ToArray();
-            var len = managedArray.Length;
-            var array = new UnmanagedArray<T>(len);
-            unsafe {
-                fixed(T* ptr = managedArray) {
-                    array.CopyFrom((IntPtr)ptr, 0, len);
+            if(source == null) { throw new ArgumentNullException(nameof(source)); }
+            if(source is T[] managedArray) {
+                var array = new UnmanagedArray<T>(managedArray.Length);
+                unsafe {
+                    fixed(T* ptr = managedArray) {
+                        array.DirectAccessor.CopyFrom((IntPtr)ptr, 0, managedArray.Length);
+                    }
                 }
+                return array;
             }
-            return array;
+            else if (source is ICollection<T> collection) {
+                var array = new UnmanagedArray<T>(collection.Count);
+                int i = 0;
+                foreach(var item in collection) {
+                    array.DirectAccessor.SetItem(i++, item);
+                }
+                return array;
+            }
+            else {
+                const int initialLen = 4;
+                var array = new UnmanagedArray<T>(initialLen);
+                int i = 0;
+                foreach(var item in source) {
+                    if(i >= array.DirectAccessor.Length) {
+                        // Expand length of the array.
+                        var newArray = new UnmanagedArray<T>(array.DirectAccessor.Length * 2);
+                        newArray.DirectAccessor.CopyFrom(array.DirectAccessor.Ptr, 0, array.DirectAccessor.Length);
+                        array.Dispose();
+                        array = newArray;
+                    }
+                    array.DirectAccessor.SetItem(i, item);
+                    i++;
+                }
+                if(array.DirectAccessor.Length != i) {
+                    // Shrink length of the array.
+                    var newArray = new UnmanagedArray<T>(i);
+                    newArray.CopyFrom(array.DirectAccessor.Ptr, 0, i);
+                    array.Dispose();
+                    array = newArray;
+                }
+                return array;
+            }
         }
     }
 

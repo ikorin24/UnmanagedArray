@@ -163,14 +163,39 @@ namespace Test
         }
 
         [Fact]
-        public void NormalArrayToUnmanaged()
+        public void ToUnmanagedArray()
         {
             var rand = new Random(12345678);
             var origin = Enumerable.Range(0, 100).Select(i => rand.Next()).ToArray();
+
+            // from Array
             using(var array = origin.ToUnmanagedArray()) {
+                Assert.Equal(origin.Length, array.Length);
                 for(int i = 0; i < array.Length; i++) {
                     Assert.Equal(array[i], origin[i]);
                 }
+            }
+
+            // From ICollection<T>
+            var list = origin.ToList();
+            using(var array = list.ToUnmanagedArray()) {
+                Assert.Equal(list.Count, array.Length);
+                for(int i = 0; i < array.Length; i++) {
+                    Assert.Equal(array[i], list[i]);
+                }
+            }
+
+            // From IEnumerable<T>
+            using(var array = Enumerable.Range(0, 10).ToUnmanagedArray()) {
+                Assert.Equal(10, array.Length);
+                for(int i = 0; i < array.Length; i++) {
+                    Assert.Equal(array[i], i);
+                }
+            }
+
+            // From Empty IEnumerable<T>
+            using(var array = Enumerable.Empty<int>().ToUnmanagedArray()) {
+                Assert.Equal(0, array.Length);
             }
         }
 
@@ -227,13 +252,6 @@ namespace Test
             using(var array2 = new UnmanagedArray<int>(array.Length)) {
                 Assert.False(array.Contains(179));
                 Assert.True(array.Contains(16));
-
-                var copy = new int[array.Length + 5];
-                array.CopyTo(copy, 5);
-                Assert.True(copy.Skip(5).SequenceEqual(array));
-
-                array2.CopyFrom(array.Ptr, 2, 8);
-                Assert.True(array2.Skip(2).SequenceEqual(array.Take(8)));
             }
         }
 
@@ -311,6 +329,19 @@ namespace Test
                     else {
                         Assert.True(array3[i]);
                     }
+                }
+            }
+
+            // Copy from Empty
+            using(var array = new UnmanagedArray<short>(10)) {
+                var empty = Enumerable.Empty<short>().ToArray();
+                unsafe {
+                    fixed(short* ptr = empty) {
+                        array.CopyFrom((IntPtr)ptr, 0, empty.Length);
+                    }
+                }
+                for(int i = 0; i < array.Length; i++) {
+                    Assert.Equal(0, array[i]);
                 }
             }
         }
