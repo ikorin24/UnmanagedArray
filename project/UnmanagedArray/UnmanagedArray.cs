@@ -216,6 +216,30 @@ namespace System.Collections.Generic
             return new IntPtr((T*)_array + index);
         }
 
+        /// <summary>Copy fron <see cref="UnmanagedArray{T}"/>.</summary>
+        /// <param name="array">source array of type <see cref="UnmanagedArray{T}"/></param>
+        public void CopyFrom(UnmanagedArray<T> array) => CopyFrom(array.Ptr, 0, array.Length);
+
+        /// <summary>Copy from <see cref="ReadOnlySpan{T}"/> to this <see cref="UnmanagedArray{T}"/> of index 0.</summary>
+        /// <param name="source"><see cref="ReadOnlySpan{T}"/> object.</param>
+        public void CopyFrom(ReadOnlySpan<T> span) => CopyFrom(span, 0);
+
+        /// <summary>Copy from <see cref="ReadOnlySpan{T}"/> to this <see cref="UnmanagedArray{T}"/> of specified index.</summary>
+        /// <param name="source"><see cref="ReadOnlySpan{T}"/> object.</param>
+        /// <param name="start">start index of destination. (destination is this <see cref="UnmanagedArray{T}"/>.)</param>
+        public unsafe void CopyFrom(ReadOnlySpan<T> source, int start)
+        {
+            ThrowIfDisposed();
+            if(start < 0) { throw new ArgumentOutOfRangeException(); }
+            if(start + source.Length > _length) { throw new ArgumentOutOfRangeException(); }
+            var objsize = sizeof(T);
+            fixed(T* ptr = source) {
+                var byteLen = (long)(source.Length * objsize);
+                Buffer.MemoryCopy(ptr, (void*)(_array + start * objsize), byteLen, byteLen);
+                _version++;
+            }
+        }
+
         /// <summary>Copy from unmanaged.</summary>
         /// <param name="source">unmanaged source pointer</param>
         /// <param name="start">start index of destination. (destination is this <see cref="UnmanagedArray{T}"/>.)</param>
@@ -230,26 +254,6 @@ namespace System.Collections.Generic
             var byteLen = (long)(length * objsize);
             Buffer.MemoryCopy((void*)source, (void*)(_array + start * objsize), byteLen, byteLen);
             _version++;
-        }
-
-        /// <summary>Copy fron <see cref="UnmanagedArray{T}"/>.</summary>
-        /// <param name="array">source array of type <see cref="UnmanagedArray{T}"/></param>
-        public void CopyFrom(UnmanagedArray<T> array) => CopyFrom(array.Ptr, 0, array.Length);
-
-        /// <summary>Copy from <see cref="ReadOnlySpan{T}"/>.</summary>
-        /// <param name="source"><see cref="ReadOnlySpan{T}"/> object.</param>
-        /// <param name="start">start index of destination. (destination is this <see cref="UnmanagedArray{T}"/>.)</param>
-        public unsafe void CopyFrom(ReadOnlySpan<T> source, int start)
-        {
-            ThrowIfDisposed();
-            if(start < 0) { throw new ArgumentOutOfRangeException(); }
-            if(start + source.Length > _length) { throw new ArgumentOutOfRangeException(); }
-            var objsize = sizeof(T);
-            fixed(T* ptr = source) {
-                var byteLen = (long)(source.Length * objsize);
-                Buffer.MemoryCopy(ptr, (void*)(_array + start * objsize), byteLen, byteLen);
-                _version++;
-            }
         }
 
         /// <summary>Return <see cref="Span{T}"/> of this <see cref="UnmanagedArray{T}"/>.</summary>

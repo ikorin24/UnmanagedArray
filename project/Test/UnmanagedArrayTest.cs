@@ -11,7 +11,7 @@ namespace Test
     public class UnmanagedArrayTest
     {
         [Fact]
-        public void Exception()
+        public unsafe void Exception()
         {
             using(var array = new UnmanagedArray<int>(10000)) {
                 Assert.Throws<IndexOutOfRangeException>(() => array[-1] = 4);
@@ -26,6 +26,15 @@ namespace Test
                 Assert.Throws<ArgumentException>(() => array.CopyTo(new int[array.Length], 10));        // not enough length of destination
                 Assert.Throws<ArgumentException>(() => array.CopyTo(new int[100], 0));                  // not enough length of destination
 
+                // CopyFrom
+                Assert.Throws<ArgumentOutOfRangeException>(() => array.CopyFrom(new ReadOnlySpan<int>(), -1));
+                Assert.Throws<ArgumentOutOfRangeException>(() => array.CopyFrom(new int[10000], 5));
+                Assert.Throws<ArgumentNullException>(() => array.CopyFrom(IntPtr.Zero, 0, 4));
+                var ptr = stackalloc int[10];
+                Assert.Throws<ArgumentOutOfRangeException>(() => array.CopyFrom((IntPtr)ptr, -1, 5));
+                Assert.Throws<ArgumentOutOfRangeException>(() => array.CopyFrom((IntPtr)ptr, 5, -1));
+                Assert.Throws<ArgumentOutOfRangeException>(() => array.CopyFrom((IntPtr)ptr, 9999, 4));
+
                 // NotSupported methods
                 Assert.Throws<NotSupportedException>(() => (array as IList<int>).Insert(0, 0));
                 Assert.Throws<NotSupportedException>(() => (array as IList<int>).RemoveAt(0));
@@ -38,6 +47,7 @@ namespace Test
                 Assert.Throws<NotSupportedException>(() => (array as IList).Remove(0));
                 Assert.Throws<NotSupportedException>(() => (array as IList).RemoveAt(0));
             }
+            Assert.Throws<ArgumentNullException>(() => (null as int[])!.ToUnmanagedArray());
             Assert.Throws<ArgumentOutOfRangeException>(() => new UnmanagedArray<bool>(-4));
         }
 
@@ -82,6 +92,16 @@ namespace Test
                     Assert.Equal(i, (array as IList)[i]);
                 }
             }
+        }
+
+        [Fact]
+        public void Constructor()
+        {
+            using var array = new UnmanagedArray<int>(10);
+            Assert.Equal(10, array.Length);
+            Span<ushort> span = stackalloc ushort[10];
+            using var array2 = new UnmanagedArray<ushort>(span);
+            Assert.Equal(10, array2.Length);
         }
 
         [Fact]
@@ -183,11 +203,23 @@ namespace Test
         }
 
         [Fact]
-        public void Methods1()
+        public void IndexOf()
+        {
+            using(var array = Enumerable.Range(10, 10).ToUnmanagedArray()) {
+                Assert.Equal(4, array.IndexOf(14));
+                Assert.Equal(-1, array.IndexOf(120));
+                Assert.Equal(5, ((IList)array).IndexOf(15));
+                Assert.Equal(-1, ((IList)array).IndexOf(140));
+                Assert.Equal(-1, ((IList)array).IndexOf(new object()));
+                Assert.Equal(-1, ((IList)array).IndexOf(null!));
+            }
+        }
+
+        [Fact]
+        public void Contains()
         {
             using(var array = Enumerable.Range(10, 10).ToUnmanagedArray())
             using(var array2 = new UnmanagedArray<int>(array.Length)) {
-                Assert.Equal(4, array.IndexOf(14));
                 Assert.False(array.Contains(179));
                 Assert.True(array.Contains(16));
 
@@ -201,7 +233,85 @@ namespace Test
         }
 
         [Fact]
-        public void Method2()
+        public void CopyTo()
+        {
+            using(var array = new UnmanagedArray<int>(10)) {
+                var dest = new int[array.Length + 5];
+                array.CopyTo(dest, 5);
+                Assert.True(dest.Skip(5).SequenceEqual(array));
+            }
+
+            using(var array = new UnmanagedArray<float>(20)) {
+                var dest = new float[array.Length + 8];
+                ((ICollection)array).CopyTo(dest, 8);
+                Assert.True(dest.Skip(8).SequenceEqual(array));
+            }
+        }
+
+        [Fact]
+        public unsafe void GetPtr()
+        {
+            using(var array = new UnmanagedArray<long>(10)) {
+                Assert.Equal(array.Ptr, array.GetPtrIndexOf(0));
+                for(int i = 0; i < array.Length; i++) {
+                    var p1 = array.Ptr + sizeof(long) * i;
+                    var p2 = array.GetPtrIndexOf(i);
+                    var p3 = (IntPtr)(&((long*)array.Ptr)[i]);
+                    Assert.Equal(p1, p2);
+                    Assert.Equal(p1, p3);
+                }
+            }
+        }
+
+        [Fact]
+        public void CopyFrom()
+        {
+            Span<bool> span = stackalloc bool[20];
+            for(int i = 0; i < span.Length; i++) {
+                span[i] = true;
+            }
+
+            using(var array = new UnmanagedArray<bool>(span.Length)) {
+                array.CopyFrom(span);
+                for(int i = 0; i < array.Length; i++) {
+                    Assert.True(array[i]);
+                }
+            }
+            using(var array = new UnmanagedArray<bool>(span.Length + 20)) {
+                array.CopyFrom(span, 5);
+                for(int i = 0; i < array.Length; i++) {
+                    if(i < 5 || i >= 5 + span.Length) {
+                        Assert.False(array[i]);
+                    }
+                    else {
+                        Assert.True(array[i]);
+                    }
+                }
+            }
+
+            using(var array = new UnmanagedArray<bool>(span))
+            using(var array2 = new UnmanagedArray<bool>(array.Length + 20))
+            using(var array3 = new UnmanagedArray<bool>(array.Length + 20)) {
+                array2.CopyFrom(array);
+                for(int i = 0; i < array2.Length; i++) {
+                    Assert.Equal(i < array.Length, array2[i]);
+                }
+
+                array3.CopyFrom(array.Ptr, 4, array.Length);
+                for(int i = 0; i < array3.Length; i++) {
+
+                    if(i < 4 || i >= 4 + array.Length) {
+                        Assert.False(array3[i]);
+                    }
+                    else {
+                        Assert.True(array3[i]);
+                    }
+                }
+            }
+        }
+
+        [Fact]
+        public void CreateFromStruct()
         {
             var data = new TestStruct()
             {
@@ -223,6 +333,11 @@ namespace Test
                 Assert.Equal<uint>(50, array[4]);
                 Assert.Equal<uint>(0xEEFF0011, array[5]);
                 Assert.Equal<uint>(0xAABBCCDD, array[6]);
+            }
+
+            var empty = new EmptyStruct();
+            using(var array = UnmanagedArray<byte>.CreateFromStruct(ref empty)) {
+
             }
         }
 
@@ -249,6 +364,12 @@ namespace Test
             public int B;
             [FieldOffset(8)]
             public ulong C;
+        }
+
+        [StructLayout(LayoutKind.Explicit)]
+        struct EmptyStruct
+        {
+
         }
     }
 }
