@@ -1,24 +1,39 @@
 # Unmanaged Array
 
-This is the library by which you can use unmanaged array in C#.
+An Effective tool for unmanaged array in C#.
 
 ## About
 
 Array in C# is allocated in managed memory.
 
-```UnmanagedArray<T>``` this library supports is allocated in unmanaged memory.
+```UnmanagedArray<T>``` in this library is allocated in unmanaged memory.
 
-In other words, items in ```UnmanagedArray<T>``` is not collected by Garbage Collection.
+In other words, items in `UnmanagedArray<T>` is not collected by Garbage Collection.
 
 ### Supported Types
 
-The only type of item this library supports is ```unmanaged``` type.
+The only type of item `UnmanagedArray<T>` supports is `unmanaged` type.
 
-```unmanaged``` type is '```int```', '```float```', recursive-unmanaged struct, and so on. 
+`unmanaged` type is `int`, `float`, recursive-unmanaged struct, and so on.
 
-'```string```', and other types which are ```class``` are NOT SUPPORTED.
+`string`, and other types which are `class` are NOT SUPPORTED.
 
 (because reference types are allocated in managed memory on C#.)
+
+## Requirements and Dependencies (On Building)
+
+- .NET Standard 2.0
+- C# 8.0
+
+## Building from Source
+
+```sh
+$ git clone https://github.com/ikorin24/UnmanagedArray.git
+$ cd UnmanagedArray
+$ dotnet build src/UnmanagedArray/UnmanagedArray.csproj -c Release
+
+# ----> src/UnmanagedArray/bin/Release/netstandard2.0/UnmanagedArray.dll
+```
 
 ## How to Use
 
@@ -37,12 +52,12 @@ using(var array = new UnmanagedArray<int>(10))
 }
 ```
 
-If not use the ```using``` scope, you can release the memories by ```Free()``` method.
+If not use the `using` scope, you can release the memories by `Dispose()` method.
 
 ```cs
 var array = new UnmanagedArray<int>(10);
 array[3] = 100;
-array.Free();       // The memories allocated in unmanaged is released here.
+array.Dispose();       // The memories allocated in unmanaged is released here.
 ```
 
 Of cource, LINQ is supported.
@@ -58,13 +73,17 @@ using(var array2 = array.Where(x => x >= 5).ToUnmanagedArray()) {
 
 ***NOTICE***
 
-```UnmanagedArray<T>``` has Finalizer and releases its unmanaged resources automatically when you forget releasing that.
+`UnmanagedArray<T>` has Finalizer and releases its unmanaged resources automatically when you forget releasing that.
 
-However, you have to release them explicitly ( by ```using``` scope or ```Free()``` ).
+However, you have to release them explicitly ( by `using` scope or `Dispose()` ).
 
-## License
+## License and Credits
 
-This is under MIT license.
+This is under [MIT license](https://github.com/ikorin24/UnmanagedArray/blob/master/LICENSE).
+
+This software includes the work that is distributed in the Apache License 2.0.
+
+Apache License 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
 
 ## Author
 
