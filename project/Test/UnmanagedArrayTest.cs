@@ -49,6 +49,7 @@ namespace Test
             }
             Assert.Throws<ArgumentNullException>(() => (null as int[])!.ToUnmanagedArray());
             Assert.Throws<ArgumentOutOfRangeException>(() => new UnmanagedArray<bool>(-4));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new UnmanagedArray<bool>(-5, true));
         }
 
         [Fact]
@@ -102,6 +103,10 @@ namespace Test
             Span<ushort> span = stackalloc ushort[10];
             using var array2 = new UnmanagedArray<ushort>(span);
             Assert.Equal(10, array2.Length);
+            using var array3 = new UnmanagedArray<long>(30, 300L);
+            for(int i = 0; i < array3.Length; i++) {
+                Assert.Equal(300L, array3[i]);
+            }
         }
 
         [Fact]

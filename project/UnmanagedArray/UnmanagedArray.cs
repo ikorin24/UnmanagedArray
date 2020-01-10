@@ -117,6 +117,23 @@ namespace System.Collections.Generic
             }
         }
 
+        /// <summary>Create new <see cref="UnmanagedArray{T}"/> filled by specified element.</summary>
+        /// <param name="length">length of array</param>
+        /// <param name="fill">element that fills array</param>
+        public unsafe UnmanagedArray(int length, T fill)
+        {
+            if(length < 0) { throw new ArgumentOutOfRangeException(); }
+            var objsize = sizeof(T);
+            _array = Marshal.AllocHGlobal(length * objsize);
+            _length = length;
+
+            // fill
+            var array = (T*)_array;
+            for(int i = 0; i < length; i++) {
+                array[i] = fill;
+            }
+        }
+
         /// <summary>Create new <see cref="UnmanagedArray{T}"/>, those elements are copied from <see cref="ReadOnlySpan{T}"/>.</summary>
         /// <param name="span">Elements of the <see cref="UnmanagedArray{T}"/> are initialized by this <see cref="ReadOnlySpan{T}"/>.</param>
         public unsafe UnmanagedArray(ReadOnlySpan<T> span)
