@@ -11,6 +11,9 @@
     <Description>An effective tool for unmanaged array.</Description>
     <Copyright>Copyright © 2020 ikorin24</Copyright>
     <RepositoryUrl>https:/github.com/ikorin24/UnmanagedArray</RepositoryUrl>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -19,6 +22,13 @@
 
   <ItemGroup>
     <PackageReference Include="System.Memory" Version="4.5.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>
