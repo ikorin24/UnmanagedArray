@@ -41,7 +41,6 @@ namespace System.Collections.Generic
         where T : unmanaged
     {
         private readonly int _length;
-        private int _version;
         private bool _disposed;
         private readonly IntPtr _array;
 
@@ -74,7 +73,6 @@ namespace System.Collections.Generic
                 if((uint)i >= (uint)_length) { throw new IndexOutOfRangeException(); }
                 ThrowIfDisposed();
                 ((T*)_array)[i] = value;
-                _version++;
             }
         }
 
@@ -264,7 +262,6 @@ namespace System.Collections.Generic
             fixed(T* ptr = source) {
                 var byteLen = (long)(source.Length * objsize);
                 Buffer.MemoryCopy(ptr, (void*)(_array + start * objsize), byteLen, byteLen);
-                _version++;
             }
         }
 
@@ -282,7 +279,6 @@ namespace System.Collections.Generic
             var objsize = sizeof(T);
             var byteLen = (long)(length * objsize);
             Buffer.MemoryCopy((void*)source, (void*)(_array + start * objsize), byteLen, byteLen);
-            _version++;
         }
 
         /// <summary>Return <see cref="Span{T}"/> of this <see cref="UnmanagedArray{T}"/>.</summary>
@@ -347,7 +343,6 @@ namespace System.Collections.Generic
         public struct Enumerator : IEnumerator<T>, IEnumerator
         {
             private readonly UnmanagedArray<T> _array;
-            private readonly int _version;
             private int _index;
 
             /// <summary>Get current element</summary>
@@ -357,7 +352,6 @@ namespace System.Collections.Generic
             {
                 _array = array;
                 _index = 0;
-                _version = _array._version;
                 Current = default;
             }
 
@@ -369,7 +363,7 @@ namespace System.Collections.Generic
             public unsafe bool MoveNext()
             {
                 var localArray = _array;
-                if(_version == localArray._version && ((uint)_index < (uint)localArray._length)) {
+                if((uint)_index < (uint)localArray._length) {
                     Current = ((T*)localArray._array)[_index];
                     _index++;
                     return true;
@@ -380,9 +374,6 @@ namespace System.Collections.Generic
             private bool MoveNextRare()
             {
                 var localArray = _array;
-                if(_version != localArray._version) {
-                    throw new InvalidOperationException();
-                }
                 _index = localArray._length + 1;
                 Current = default;
                 return false;
@@ -401,9 +392,6 @@ namespace System.Collections.Generic
 
             void IEnumerator.Reset()
             {
-                if(_version != _array._version) {
-                    throw new InvalidOperationException();
-                }
                 _index = 0;
                 Current = default;
             }
@@ -423,7 +411,6 @@ namespace System.Collections.Generic
             {
                 _array = array;
                 _index = 0;
-                _version = _array._version;
                 Current = default;
             }
 
@@ -435,7 +422,7 @@ namespace System.Collections.Generic
             public unsafe bool MoveNext()
             {
                 var localArray = _array;
-                if(_version == localArray._version && ((uint)_index < (uint)localArray._length)) {
+                if((uint)_index < (uint)localArray._length) {
                     Current = ((T*)localArray._array)[_index];
                     _index++;
                     return true;
@@ -446,9 +433,6 @@ namespace System.Collections.Generic
             private bool MoveNextRare()
             {
                 var localArray = _array;
-                if(_version != localArray._version) {
-                    throw new InvalidOperationException();
-                }
                 _index = localArray._length + 1;
                 Current = default;
                 return false;
@@ -467,9 +451,6 @@ namespace System.Collections.Generic
 
             void IEnumerator.Reset()
             {
-                if(_version != _array._version) {
-                    throw new InvalidOperationException();
-                }
                 _index = 0;
                 Current = default;
             }
@@ -490,7 +471,6 @@ namespace System.Collections.Generic
             internal unsafe void SetItem(int i, T value)
             {
                 ((T*)_instance._array)[i] = value;
-                _instance._version++;
             }
 
             internal unsafe void CopyFrom(IntPtr source, int start, int length)
@@ -498,7 +478,6 @@ namespace System.Collections.Generic
                 var objsize = sizeof(T);
                 var byteLen = (long)(length * objsize);
                 Buffer.MemoryCopy((void*)source, (void*)(_instance._array + start * objsize), byteLen, byteLen);
-                _instance._version++;
             }
             internal InternalDirectAccessor(UnmanagedArray<T> instance) => _instance = instance;
         }
