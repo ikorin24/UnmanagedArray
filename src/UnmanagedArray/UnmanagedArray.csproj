@@ -6,10 +6,15 @@
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Authors>ikorin24</Authors>
+    <Company>ikorin24</Company>
+    <Description>An effective tool for unmanaged array.</Description>
+    <Copyright>Copyright © 2020 ikorin24</Copyright>
+    <RepositoryUrl>https:/github.com/ikorin24/UnmanagedArray</RepositoryUrl>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DocumentationFile/>
+    <DocumentationFile />
   </PropertyGroup>
 
   <ItemGroup>
