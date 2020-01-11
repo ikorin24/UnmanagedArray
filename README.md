@@ -104,3 +104,7 @@ Apache License 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
 ### 2020/01/11 v1.0.0
 
 - First release
+
+### 2020/01/12 v1.0.1
+
+- Performance improvement of iteration by `foreach`, that is as faster as T[] (normal array).
