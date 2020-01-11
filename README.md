@@ -112,6 +112,6 @@ Apache License 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
 
 ### 2020/01/12 v1.0.1
 
-[![nuget](https://img.shields.io/badge/nuget-v1.0.1-FA77FF)](https://www.nuget.org/packages/UnmanagedArray/1.1.1)
+[![nuget](https://img.shields.io/badge/nuget-v1.0.1-FA77FF)](https://www.nuget.org/packages/UnmanagedArray/1.0.1)
 
 - Performance improvement of iteration by `foreach`, that is as faster as T[] (normal array).
