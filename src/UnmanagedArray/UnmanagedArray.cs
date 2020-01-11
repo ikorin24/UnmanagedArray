@@ -340,9 +340,10 @@ namespace System.Collections.Generic
         void ICollection.CopyTo(Array array, int index) => CopyTo((T[])array, index);
 
         /// <summary>Enumerator of <see cref="UnmanagedArray{T}"/></summary>
-        public struct Enumerator : IEnumerator<T>, IEnumerator
+        public unsafe struct Enumerator : IEnumerator<T>, IEnumerator
         {
-            private readonly UnmanagedArray<T> _array;
+            private readonly T* _ptr;
+            private readonly int _len;
             private int _index;
 
             /// <summary>Get current element</summary>
@@ -350,7 +351,8 @@ namespace System.Collections.Generic
 
             internal Enumerator(UnmanagedArray<T> array)
             {
-                _array = array;
+                _ptr = (T*)array._array;
+                _len = array._length;
                 _index = 0;
                 Current = default;
             }
@@ -360,11 +362,10 @@ namespace System.Collections.Generic
 
             /// <summary>Move to next element</summary>
             /// <returns>true if success to move next. false to end.</returns>
-            public unsafe bool MoveNext()
+            public bool MoveNext()
             {
-                var localArray = _array;
-                if((uint)_index < (uint)localArray._length) {
-                    Current = ((T*)localArray._array)[_index];
+                if((uint)_index < (uint)_len) {
+                    Current = _ptr[_index];
                     _index++;
                     return true;
                 }
@@ -373,22 +374,12 @@ namespace System.Collections.Generic
 
             private bool MoveNextRare()
             {
-                var localArray = _array;
-                _index = localArray._length + 1;
+                _index = _len + 1;
                 Current = default;
                 return false;
             }
 
-            object IEnumerator.Current
-            {
-                get
-                {
-                    if(_index == 0 || _index == _array._length + 1) {
-                        throw new InvalidOperationException();
-                    }
-                    return Current;
-                }
-            }
+            object IEnumerator.Current => Current;
 
             void IEnumerator.Reset()
             {
@@ -398,10 +389,10 @@ namespace System.Collections.Generic
         }
 
         /// <summary>Enumerator of <see cref="UnmanagedArray{T}"/></summary>
-        public class EnumeratorClass : IEnumerator<T>, IEnumerator
+        public unsafe class EnumeratorClass : IEnumerator<T>, IEnumerator
         {
-            private readonly UnmanagedArray<T> _array;
-            private readonly int _version;
+            private readonly T* _ptr;
+            private readonly int _len;
             private int _index;
 
             /// <summary>Get current element</summary>
@@ -409,7 +400,8 @@ namespace System.Collections.Generic
 
             internal EnumeratorClass(UnmanagedArray<T> array)
             {
-                _array = array;
+                _ptr = (T*)array._array;
+                _len = array._length;
                 _index = 0;
                 Current = default;
             }
@@ -419,11 +411,10 @@ namespace System.Collections.Generic
 
             /// <summary>Move to next element</summary>
             /// <returns>true if success to move next. false to end.</returns>
-            public unsafe bool MoveNext()
+            public bool MoveNext()
             {
-                var localArray = _array;
-                if((uint)_index < (uint)localArray._length) {
-                    Current = ((T*)localArray._array)[_index];
+                if((uint)_index < (uint)_len) {
+                    Current = _ptr[_index];
                     _index++;
                     return true;
                 }
@@ -432,22 +423,12 @@ namespace System.Collections.Generic
 
             private bool MoveNextRare()
             {
-                var localArray = _array;
-                _index = localArray._length + 1;
+                _index = _len + 1;
                 Current = default;
                 return false;
             }
 
-            object IEnumerator.Current
-            {
-                get
-                {
-                    if(_index == 0 || _index == _array._length + 1) {
-                        throw new InvalidOperationException();
-                    }
-                    return Current;
-                }
-            }
+            object IEnumerator.Current => Current;
 
             void IEnumerator.Reset()
             {
