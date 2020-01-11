@@ -366,11 +366,11 @@ namespace System.Collections.Generic
 
             /// <summary>Move to next element</summary>
             /// <returns>true if success to move next. false to end.</returns>
-            public bool MoveNext()
+            public unsafe bool MoveNext()
             {
                 var localArray = _array;
                 if(_version == localArray._version && ((uint)_index < (uint)localArray._length)) {
-                    Current = localArray[_index];
+                    Current = ((T*)localArray._array)[_index];
                     _index++;
                     return true;
                 }
@@ -432,11 +432,11 @@ namespace System.Collections.Generic
 
             /// <summary>Move to next element</summary>
             /// <returns>true if success to move next. false to end.</returns>
-            public bool MoveNext()
+            public unsafe bool MoveNext()
             {
                 var localArray = _array;
                 if(_version == localArray._version && ((uint)_index < (uint)localArray._length)) {
-                    Current = localArray[_index];
+                    Current = ((T*)localArray._array)[_index];
                     _index++;
                     return true;
                 }
