@@ -10,10 +10,11 @@
     <Company>ikorin24</Company>
     <Description>An effective tool for unmanaged array.</Description>
     <Copyright>Copyright © 2020 ikorin24</Copyright>
-    <RepositoryUrl>https:/github.com/ikorin24/UnmanagedArray</RepositoryUrl>
+    <RepositoryUrl>https://github.com/ikorin24/UnmanagedArray.git</RepositoryUrl>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
