@@ -1,5 +1,8 @@
 # Unmanaged Array
 
+[![GitHub license](https://img.shields.io/github/license/ikorin24/UnmanagedArray?color=FA77FF)](https://github.com/ikorin24/UnmanagedArray/blob/master/LICENSE)
+[![nuget](https://img.shields.io/badge/nuget-v1.0.0-FA77FF)](https://www.nuget.org/packages/UnmanagedArray)
+
 An Effective tool for unmanaged array in C#.
 
 ## About
