@@ -160,6 +160,7 @@ namespace System.Collections.Generic
             }
         }
 
+        /// <summary>Finalizer of <see cref="UnmanagedArray{T}"/></summary>
         ~UnmanagedArray() => Dispose(false);
 
         /// <summary>Get enumerator instance.</summary>
@@ -233,6 +234,9 @@ namespace System.Collections.Generic
         bool ICollection<T>.Remove(T item) => throw new NotSupportedException();
         void ICollection<T>.Clear() => throw new NotSupportedException();
 
+        /// <summary>Get pointer address of specified index.</summary>
+        /// <param name="index">index</param>
+        /// <returns>pointer address</returns>
         public unsafe IntPtr GetPtrIndexOf(int index)
         {
             ThrowIfDisposed();
@@ -245,7 +249,7 @@ namespace System.Collections.Generic
         public void CopyFrom(UnmanagedArray<T> array) => CopyFrom(array.Ptr, 0, array.Length);
 
         /// <summary>Copy from <see cref="ReadOnlySpan{T}"/> to this <see cref="UnmanagedArray{T}"/> of index 0.</summary>
-        /// <param name="source"><see cref="ReadOnlySpan{T}"/> object.</param>
+        /// <param name="span"><see cref="ReadOnlySpan{T}"/> object.</param>
         public void CopyFrom(ReadOnlySpan<T> span) => CopyFrom(span, 0);
 
         /// <summary>Copy from <see cref="ReadOnlySpan{T}"/> to this <see cref="UnmanagedArray{T}"/> of specified index.</summary>
@@ -339,11 +343,14 @@ namespace System.Collections.Generic
         int IList.IndexOf(object value) => (value is T v) ? IndexOf(v) : -1;
         void ICollection.CopyTo(Array array, int index) => CopyTo((T[])array, index);
 
+        /// <summary>Enumerator of <see cref="UnmanagedArray{T}"/></summary>
         public struct Enumerator : IEnumerator<T>, IEnumerator
         {
             private readonly UnmanagedArray<T> _array;
             private readonly int _version;
             private int _index;
+
+            /// <summary>Get current element</summary>
             public T Current { get; private set; }
 
             internal Enumerator(UnmanagedArray<T> array)
@@ -354,8 +361,11 @@ namespace System.Collections.Generic
                 Current = default;
             }
 
+            /// <summary>Dispose of <see cref="IDisposable"/></summary>
             public void Dispose() { }
 
+            /// <summary>Move to next element</summary>
+            /// <returns>true if success to move next. false to end.</returns>
             public bool MoveNext()
             {
                 var localArray = _array;
@@ -399,11 +409,14 @@ namespace System.Collections.Generic
             }
         }
 
+        /// <summary>Enumerator of <see cref="UnmanagedArray{T}"/></summary>
         public class EnumeratorClass : IEnumerator<T>, IEnumerator
         {
             private readonly UnmanagedArray<T> _array;
             private readonly int _version;
             private int _index;
+
+            /// <summary>Get current element</summary>
             public T Current { get; private set; }
 
             internal EnumeratorClass(UnmanagedArray<T> array)
@@ -414,8 +427,11 @@ namespace System.Collections.Generic
                 Current = default;
             }
 
+            /// <summary>Dispose of <see cref="IDisposable"/></summary>
             public void Dispose() { }
 
+            /// <summary>Move to next element</summary>
+            /// <returns>true if success to move next. false to end.</returns>
             public bool MoveNext()
             {
                 var localArray = _array;
@@ -488,6 +504,7 @@ namespace System.Collections.Generic
         }
     }
 
+    /// <summary>Define extension methods of <see cref="UnmanagedArray{T}"/></summary>
     public static class UnmanagedArrayExtension
     {
         /// <summary>Create a new instance of <see cref="UnmanagedArray{T}"/> initialized by source.</summary>
