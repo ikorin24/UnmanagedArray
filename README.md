@@ -35,6 +35,16 @@ $ dotnet build src/UnmanagedArray/UnmanagedArray.csproj -c Release
 # ----> src/UnmanagedArray/bin/Release/netstandard2.0/UnmanagedArray.dll
 ```
 
+## Installation
+
+Install from Nuget by package manager console (in Visual Studio).
+
+https://www.nuget.org/packages/UnmanagedArray
+
+```
+PM> Install-Package UnmanagedArray
+```
+
 ## How to Use
 
 The way of use is similar to normal array.
