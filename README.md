@@ -88,3 +88,9 @@ Apache License 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
 ## Author
 
 [github: ikorin24](https://github.com/ikorin24)
+
+## Release Note
+
+### 2020/01/11 v1.0.0
+
+- First release
