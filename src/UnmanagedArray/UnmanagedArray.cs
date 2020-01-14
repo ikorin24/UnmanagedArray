@@ -25,8 +25,8 @@ SOFTWARE.
 
 #nullable enable
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 
 namespace System.Collections.Generic
 {
@@ -62,22 +62,36 @@ namespace System.Collections.Generic
         /// <returns>The item of specific index</returns>
         public unsafe T this[int i]
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
                 if((uint)i >= (uint)_length) { throw new IndexOutOfRangeException(); }
-                ThrowIfDisposed();
+
+                // [NOTICE]
+                // For performance of accessing by index in 'for' iteration, checking disposing is inlined.
+
+                //ThrowIfDisposed();
+                if(_disposed) { throw new ObjectDisposedException(nameof(UnmanagedArray<T>)); }
+
                 return ((T*)_array)[i];
             }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set
             {
                 if((uint)i >= (uint)_length) { throw new IndexOutOfRangeException(); }
-                ThrowIfDisposed();
+
+                // [NOTICE]
+                // For performance of accessing by index in 'for' iteration, checking disposing is inlined.
+                // ThrowIfDisposed();
+                if(_disposed) { throw new ObjectDisposedException(nameof(UnmanagedArray<T>)); }
+
                 ((T*)_array)[i] = value;
             }
         }
 
         /// <summary>Get length of this array</summary>
-        public int Length { get { ThrowIfDisposed(); return _length; } }
+        public int Length => _length;   // No checking disposed because this property is safe. (for performance of "for(int i = 0; i < unmanagedArray.Length; i++)")
 
 
         // *** NOTICE ***
@@ -93,11 +107,11 @@ namespace System.Collections.Generic
 
         bool IList.IsFixedSize => true;
 
-        int ICollection<T>.Count { get { ThrowIfDisposed(); return _length; } }
+        int ICollection<T>.Count => _length;   // No checking disposed because this property is safe.
 
-        int IReadOnlyCollection<T>.Count { get { ThrowIfDisposed(); return _length; } }
+        int IReadOnlyCollection<T>.Count => _length;   // No checking disposed because this property is safe.
 
-        int ICollection.Count { get { ThrowIfDisposed(); return _length; } }
+        int ICollection.Count => _length;   // No checking disposed because this property is safe.
 
         object ICollection.SyncRoot => _syncRoot ?? (_syncRoot = new object());
         private object? _syncRoot;
@@ -165,7 +179,13 @@ namespace System.Collections.Generic
         /// <returns></returns>
         public Enumerator GetEnumerator()
         {
+            // [NOTICE]
+            // Do not change disposed checking into inlined.
+            // Performance of 'foreach' iteration becomes worse. (I don't know why assembly codes JIT dumped of two cases makes a difference.)
+
+            // X   if(_disposed) throw new ObjectDisposedException()
             ThrowIfDisposed();
+
             return new Enumerator(this);
         }
 
@@ -483,7 +503,7 @@ namespace System.Collections.Generic
                 }
                 return array;
             }
-            else if (source is ICollection<T> collection) {
+            else if(source is ICollection<T> collection) {
                 var array = new UnmanagedArray<T>(collection.Count);
                 int i = 0;
                 foreach(var item in collection) {
