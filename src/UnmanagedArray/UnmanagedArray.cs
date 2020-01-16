@@ -210,7 +210,7 @@ namespace System.Collections.Generic
         {
             ThrowIfDisposed();
             for(int i = 0; i < _length; i++) {
-                if(item.Equals(this[i])) { return i; }
+                if(item.Equals(DirectAccessor.GetItem(i))) { return i; }
             }
             return -1;
         }
@@ -222,7 +222,7 @@ namespace System.Collections.Generic
         {
             ThrowIfDisposed();
             for(int i = 0; i < _length; i++) {
-                if(item.Equals(this[i])) { return true; }
+                if(item.Equals(DirectAccessor.GetItem(i))) { return true; }
             }
             return false;
         }
@@ -308,6 +308,14 @@ namespace System.Collections.Generic
             ThrowIfDisposed();
             return new Span<T>((T*)_array, _length);
         }
+
+        ///// <summary>Convert this instance into <see cref="ReadOnlyUnmanagedArray{T}"/>.</summary>
+        ///// <returns><see cref="ReadOnlyUnmanagedArray{T}"/></returns>
+        //public ReadOnlyUnmanagedArray<T> AsReadOnly()
+        //{
+        //    ThrowIfDisposed();
+        //    return new ReadOnlyUnmanagedArray<T>(this);
+        //}
 
         /// <summary>Create new <see cref="UnmanagedArray{T}"/> whose values are initialized by memory layout of specified structure.</summary>
         /// <typeparam name="TStruct">type of source structure</typeparam>
