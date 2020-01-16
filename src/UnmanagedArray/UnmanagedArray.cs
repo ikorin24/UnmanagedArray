@@ -462,7 +462,7 @@ namespace System.Collections.Generic
         /// This may cause violational access to memory!!!!!<para/>
         /// Access to private fields directly without any checking.<para/>
         /// </summary>
-        internal struct InternalDirectAccessor
+        internal readonly struct InternalDirectAccessor
         {
             private readonly UnmanagedArray<T> _instance;
             internal int Length => _instance._length;
