@@ -27,6 +27,7 @@ SOFTWARE.
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
+using System.Buffers;
 
 namespace System.Collections.Generic
 {
@@ -309,13 +310,14 @@ namespace System.Collections.Generic
             return new Span<T>((T*)_array, _length);
         }
 
-        ///// <summary>Convert this instance into <see cref="ReadOnlyUnmanagedArray{T}"/>.</summary>
-        ///// <returns><see cref="ReadOnlyUnmanagedArray{T}"/></returns>
-        //public ReadOnlyUnmanagedArray<T> AsReadOnly()
-        //{
-        //    ThrowIfDisposed();
-        //    return new ReadOnlyUnmanagedArray<T>(this);
-        //}
+        /// <summary>Convert this instance into <see cref="Memory{T}"/>.</summary>
+        /// <returns><see cref="Memory{T}"/></returns>
+        public unsafe Memory<T> AsMemory()
+        {
+            ThrowIfDisposed();
+            return UnmanagedMemoryManager<T>.GetMemory((T*)_array, _length);
+        }
+
 
         /// <summary>Create new <see cref="UnmanagedArray{T}"/> whose values are initialized by memory layout of specified structure.</summary>
         /// <typeparam name="TStruct">type of source structure</typeparam>
@@ -563,5 +565,43 @@ namespace System.Collections.Generic
         }
 
         public UnmanagedArrayDebuggerTypeProxy(UnmanagedArray<T> entity) => _entity = entity;
+    }
+
+
+    internal unsafe sealed class UnmanagedMemoryManager<T> : MemoryManager<T> where T : unmanaged
+    {
+        private static UnmanagedMemoryManager<T>? _default;
+        private T* _ptr;
+        private int _length;
+
+        private UnmanagedMemoryManager() { }
+
+        public static Memory<T> GetMemory(T* ptr, int length)
+        {
+            _default ??= new UnmanagedMemoryManager<T>();
+            _default._ptr = ptr;
+            _default._length = length;
+            return _default.Memory;
+        }
+
+        public override Span<T> GetSpan() => new Span<T>(_ptr, _length);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override MemoryHandle Pin(int elementIndex = 0)
+        {
+            if(elementIndex < 0 || elementIndex >= _length) { throw new ArgumentOutOfRangeException(nameof(elementIndex)); }
+            return new MemoryHandle(_ptr + elementIndex);
+        }
+
+        public override void Unpin()
+        {
+            // nop
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            _ptr = default;
+            _length = 0;
+        }
     }
 }
