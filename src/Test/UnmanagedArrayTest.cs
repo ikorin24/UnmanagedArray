@@ -250,8 +250,10 @@ namespace Test
         {
             using(var array = Enumerable.Range(10, 10).ToUnmanagedArray())
             using(var array2 = new UnmanagedArray<int>(array.Length)) {
-                Assert.False(array.Contains(179));
-                Assert.True(array.Contains(16));
+                var tmp = array.Contains(179);
+                Assert.False(tmp);
+                var tmp2 = array.Contains(16);
+                Assert.True(tmp2);
             }
         }
 
