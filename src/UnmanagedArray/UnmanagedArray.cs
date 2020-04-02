@@ -168,13 +168,7 @@ namespace System.Collections.Generic
         /// <returns></returns>
         public Enumerator GetEnumerator()
         {
-            // [NOTICE]
-            // Do not change disposed checking into inlined.
-            // Performance of 'foreach' iteration becomes worse. (I don't know why assembly codes JIT dumped of two cases makes a difference.)
-
-            // X   if(_disposed) throw new ObjectDisposedException()
             ThrowIfDisposed();
-
             return new Enumerator(this);
         }
 
