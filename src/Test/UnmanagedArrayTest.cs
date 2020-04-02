@@ -308,26 +308,6 @@ namespace Test
         }
 
         [Fact]
-        public void AsMemory()
-        {
-            using(var array = Enumerable.Range(0, 100).ToUnmanagedArray()) {
-                var answer = Enumerable.Range(0, 100).Sum();
-                var memory = array.AsMemory();
-                var sum = 0;
-                foreach(var item in memory.Span) {
-                    sum += item;
-                }
-                Assert.Equal(answer, sum);
-
-                var span = memory.Span;
-                for(int i = 0; i < memory.Length; i++) {
-                    span[i] = 30;
-                }
-                Assert.True(array.All(x => x == 30));
-            }
-        }
-
-        [Fact]
         public void CopyFrom()
         {
             Span<bool> span = stackalloc bool[20];

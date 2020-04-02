@@ -41,15 +41,14 @@ namespace System.Collections.Generic
     public sealed class UnmanagedArray<T> : IList<T>, IReadOnlyList<T>, IList, IReadOnlyCollection<T>, IDisposable
         where T : unmanaged
     {
-        private readonly int _length;
-        private bool _disposed;
-        private readonly IntPtr _array;
+        private int _length;
+        private IntPtr _array;
 
         /// <summary>Get pointer address of this array.</summary>
         public IntPtr Ptr { get { ThrowIfDisposed(); return _array; } }
 
         /// <summary>Get <see cref="UnmanagedArray{T}"/> is disposed.</summary>
-        public bool IsDisposed => _disposed;
+        public bool IsDisposed => _array == IntPtr.Zero;
 
         /// <summary>
         /// [CAUTION] This is only for performance in case of internal access.<para/>
@@ -67,13 +66,7 @@ namespace System.Collections.Generic
             get
             {
                 if((uint)i >= (uint)_length) { throw new IndexOutOfRangeException(); }
-
-                // [NOTICE]
-                // For performance of accessing by index in 'for' iteration, checking disposing is inlined.
-
-                //ThrowIfDisposed();
-                if(_disposed) { throw new ObjectDisposedException(nameof(UnmanagedArray<T>)); }
-
+                ThrowIfDisposed();
                 return ((T*)_array)[i];
             }
 
@@ -81,12 +74,7 @@ namespace System.Collections.Generic
             set
             {
                 if((uint)i >= (uint)_length) { throw new IndexOutOfRangeException(); }
-
-                // [NOTICE]
-                // For performance of accessing by index in 'for' iteration, checking disposing is inlined.
-                // ThrowIfDisposed();
-                if(_disposed) { throw new ObjectDisposedException(nameof(UnmanagedArray<T>)); }
-
+                ThrowIfDisposed();
                 ((T*)_array)[i] = value;
             }
         }
@@ -310,19 +298,11 @@ namespace System.Collections.Generic
             return new Span<T>((T*)_array, _length);
         }
 
-        /// <summary>Convert this instance into <see cref="Memory{T}"/>.</summary>
-        /// <returns><see cref="Memory{T}"/></returns>
-        public unsafe Memory<T> AsMemory()
-        {
-            ThrowIfDisposed();
-            return UnmanagedMemoryManager<T>.GetMemory((T*)_array, _length);
-        }
-
-
         /// <summary>Create new <see cref="UnmanagedArray{T}"/> whose values are initialized by memory layout of specified structure.</summary>
         /// <typeparam name="TStruct">type of source structure</typeparam>
         /// <param name="obj">source structure</param>
         /// <returns>instance of <see cref="UnmanagedArray{T}"/> whose values are initialized by <paramref name="obj"/></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe UnmanagedArray<T> CreateFromStruct<TStruct>(ref TStruct obj) where TStruct : unmanaged
         {
             var structSize = sizeof(TStruct);
@@ -339,25 +319,25 @@ namespace System.Collections.Generic
         /// Dispose this instance and release unmanaged memory.<para/>
         /// If already disposed, do nothing.<para/>
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Dispose(bool disposing)
         {
-            if(_disposed) { return; }
-            if(disposing) {
-                // relase managed resource here.
-            }
+            if(_array == IntPtr.Zero) { return; }
             Marshal.FreeHGlobal(_array);
-            _disposed = true;
+            _array = IntPtr.Zero;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ThrowIfDisposed()
         {
-            if(_disposed) { throw new ObjectDisposedException(nameof(UnmanagedArray<T>), "Memory of array is already free."); }
+            if(IsDisposed) { throw new ObjectDisposedException(nameof(UnmanagedArray<T>), "Memory of array is already free."); }
         }
 
         int IList.Add(object value) => throw new NotSupportedException();
@@ -583,43 +563,5 @@ namespace System.Collections.Generic
         }
 
         public UnmanagedArrayDebuggerTypeProxy(UnmanagedArray<T> entity) => _entity = entity;
-    }
-
-
-    internal unsafe sealed class UnmanagedMemoryManager<T> : MemoryManager<T> where T : unmanaged
-    {
-        private static UnmanagedMemoryManager<T>? _default;
-        private T* _ptr;
-        private int _length;
-
-        private UnmanagedMemoryManager() { }
-
-        public static Memory<T> GetMemory(T* ptr, int length)
-        {
-            _default ??= new UnmanagedMemoryManager<T>();
-            _default._ptr = ptr;
-            _default._length = length;
-            return _default.Memory;
-        }
-
-        public override Span<T> GetSpan() => new Span<T>(_ptr, _length);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override MemoryHandle Pin(int elementIndex = 0)
-        {
-            if(elementIndex < 0 || elementIndex >= _length) { throw new ArgumentOutOfRangeException(nameof(elementIndex)); }
-            return new MemoryHandle(_ptr + elementIndex);
-        }
-
-        public override void Unpin()
-        {
-            // nop
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            _ptr = default;
-            _length = 0;
-        }
     }
 }
