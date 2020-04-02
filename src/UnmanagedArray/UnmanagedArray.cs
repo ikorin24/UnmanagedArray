@@ -140,6 +140,19 @@ namespace System.Collections.Generic
             }
         }
 
+        private unsafe UnmanagedArray()
+        {
+        }
+
+        internal unsafe static UnmanagedArray<T> CreateWithoutZeroFill(int length)
+        {
+            if(length < 0) { throw new ArgumentOutOfRangeException(nameof(length)); }
+            var umarray = new UnmanagedArray<T>();
+            umarray._array = Marshal.AllocHGlobal(length * sizeof(T));
+            umarray._length = length;
+            return umarray;
+        }
+
         /// <summary>Create new <see cref="UnmanagedArray{T}"/>, those elements are copied from <see cref="ReadOnlySpan{T}"/>.</summary>
         /// <param name="span">Elements of the <see cref="UnmanagedArray{T}"/> are initialized by this <see cref="ReadOnlySpan{T}"/>.</param>
         public unsafe UnmanagedArray(ReadOnlySpan<T> span)
@@ -506,7 +519,7 @@ namespace System.Collections.Generic
                 foreach(var item in source) {
                     if(i >= array.DirectAccessor.Length) {
                         // Expand length of the array.
-                        var newArray = new UnmanagedArray<T>(array.DirectAccessor.Length * 2);
+                        var newArray = UnmanagedArray<T>.CreateWithoutZeroFill(array.DirectAccessor.Length * 2);
                         newArray.DirectAccessor.CopyFrom(array.DirectAccessor.Ptr, 0, array.DirectAccessor.Length);
                         array.Dispose();
                         array = newArray;
@@ -516,7 +529,7 @@ namespace System.Collections.Generic
                 }
                 if(array.DirectAccessor.Length != i) {
                     // Shrink length of the array.
-                    var newArray = new UnmanagedArray<T>(i);
+                    var newArray = UnmanagedArray<T>.CreateWithoutZeroFill(i);
                     newArray.CopyFrom(array.DirectAccessor.Ptr, 0, i);
                     array.Dispose();
                     array = newArray;
