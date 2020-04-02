@@ -27,7 +27,6 @@ SOFTWARE.
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
-using System.Buffers;
 
 namespace System.Collections.Generic
 {
@@ -102,8 +101,7 @@ namespace System.Collections.Generic
 
         int ICollection.Count => _length;   // No checking disposed because this property is safe.
 
-        object ICollection.SyncRoot => _syncRoot ?? (_syncRoot = new object());
-        private object? _syncRoot;
+        object ICollection.SyncRoot => this;
 
         bool ICollection.IsSynchronized => false;
 
@@ -452,18 +450,24 @@ namespace System.Collections.Generic
             internal int Length => _instance._length;
             internal IntPtr Ptr => _instance._array;
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             internal unsafe T GetItem(int i) => ((T*)_instance._array)[i];
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             internal unsafe void SetItem(int i, T value)
             {
                 ((T*)_instance._array)[i] = value;
             }
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             internal unsafe void CopyFrom(IntPtr source, int start, int length)
             {
                 var objsize = sizeof(T);
                 var byteLen = (long)(length * objsize);
                 Buffer.MemoryCopy((void*)source, (void*)(_instance._array + start * objsize), byteLen, byteLen);
             }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             internal InternalDirectAccessor(UnmanagedArray<T> instance) => _instance = instance;
         }
     }
