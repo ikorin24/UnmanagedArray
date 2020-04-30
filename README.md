@@ -1,7 +1,7 @@
 # Unmanaged Array
 
 [![GitHub license](https://img.shields.io/github/license/ikorin24/UnmanagedArray?color=FA77FF)](https://github.com/ikorin24/UnmanagedArray/blob/master/LICENSE)
-[![nuget](https://img.shields.io/badge/nuget-v1.0.2-FA77FF)](https://www.nuget.org/packages/UnmanagedArray)
+[![nuget](https://img.shields.io/badge/nuget-v1.0.3-FA77FF)](https://www.nuget.org/packages/UnmanagedArray)
 
 An Effective tool for unmanaged array in C#.
 
@@ -121,3 +121,10 @@ Apache License 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
 [![nuget](https://img.shields.io/badge/nuget-v1.0.2-FA77FF)](https://www.nuget.org/packages/UnmanagedArray/1.0.2)
 
 - Great performance improvement of accessing to the item by index. (`array[i]`)
+
+### 2020/04/30 v1.0.3
+
+[![nuget](https://img.shields.io/badge/nuget-v1.0.3-FA77FF)](https://www.nuget.org/packages/UnmanagedArray/1.0.3)
+
+- Performance improvement.
+- Add `GC.AddMemoryPressure` in constructor and `GC.RemoveMemoryPressure` in destructor.
