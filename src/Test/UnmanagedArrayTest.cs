@@ -55,9 +55,6 @@ namespace Test
         [Fact]
         public void Ptr()
         {
-            using(var array = new UnmanagedArray<short>(0)) {
-                Assert.NotEqual(array.Ptr, IntPtr.Zero);
-            }
             using(var array = new UnmanagedArray<double>(10)) {
                 Assert.NotEqual(array.Ptr, IntPtr.Zero);
             }

@@ -109,19 +109,7 @@ namespace System.Collections.Generic
 
         /// <summary>UnmanagedArray Constructor</summary>
         /// <param name="length">Length of array</param>
-        public unsafe UnmanagedArray(int length)
-        {
-            if(length < 0) { throw new ArgumentOutOfRangeException(); }
-            var objsize = sizeof(T);
-            _array = Marshal.AllocHGlobal(length * objsize);
-            _length = length;
-
-            // initialize all bytes as zero
-            var array = (byte*)_array;
-            for(int i = 0; i < objsize * length; i++) {
-                array[i] = 0x00;
-            }
-        }
+        public unsafe UnmanagedArray(int length) : this(length, default) { }
 
         /// <summary>Create new <see cref="UnmanagedArray{T}"/> filled by specified element.</summary>
         /// <param name="length">length of array</param>
@@ -129,15 +117,12 @@ namespace System.Collections.Generic
         public unsafe UnmanagedArray(int length, T fill)
         {
             if(length < 0) { throw new ArgumentOutOfRangeException(); }
-            var objsize = sizeof(T);
-            _array = Marshal.AllocHGlobal(length * objsize);
+            var bytes = sizeof(T) * length;
+            if(bytes == 0) { return; }
+            _array = Marshal.AllocHGlobal(bytes);
+            GC.AddMemoryPressure(bytes);
             _length = length;
-
-            // fill
-            var array = (T*)_array;
-            for(int i = 0; i < length; i++) {
-                array[i] = fill;
-            }
+            new Span<T>((void*)_array, _length).Fill(fill);
         }
 
         private unsafe UnmanagedArray()
@@ -148,8 +133,12 @@ namespace System.Collections.Generic
         {
             if(length < 0) { throw new ArgumentOutOfRangeException(nameof(length)); }
             var umarray = new UnmanagedArray<T>();
-            umarray._array = Marshal.AllocHGlobal(length * sizeof(T));
-            umarray._length = length;
+            var bytes = length * sizeof(T);
+            if(bytes > 0) {
+                umarray._array = Marshal.AllocHGlobal(bytes);
+                umarray._length = length;
+                GC.AddMemoryPressure(bytes);
+            }
             return umarray;
         }
 
@@ -157,19 +146,12 @@ namespace System.Collections.Generic
         /// <param name="span">Elements of the <see cref="UnmanagedArray{T}"/> are initialized by this <see cref="ReadOnlySpan{T}"/>.</param>
         public unsafe UnmanagedArray(ReadOnlySpan<T> span)
         {
-            var objsize = sizeof(T);
-            _array = Marshal.AllocHGlobal(span.Length * objsize);
+            var bytes = span.Length * sizeof(T);
+            if(bytes == 0) { return; }
+            _array = Marshal.AllocHGlobal(bytes);
+            GC.AddMemoryPressure(bytes);
             _length = span.Length;
-
-            // initialize all bytes as zero
-            for(int i = 0; i < span.Length * objsize; i++) {
-                Marshal.WriteByte(_array + i, 0x00);
-            }
-
-            var array = (T*)_array;
-            for(int i = 0; i < _length; i++) {
-                array[i] = span[i];
-            }
+            span.CopyTo(new Span<T>((void*)_array, _length));
         }
 
         /// <summary>Finalizer of <see cref="UnmanagedArray{T}"/></summary>
@@ -332,10 +314,12 @@ namespace System.Collections.Generic
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void Dispose(bool disposing)
+        private unsafe void Dispose(bool disposing)
         {
             if(_array == IntPtr.Zero) { return; }
             Marshal.FreeHGlobal(_array);
+            Debug.Assert(sizeof(T) * _length > 0);
+            GC.RemoveMemoryPressure(sizeof(T) * _length);
             _array = IntPtr.Zero;
         }
 
