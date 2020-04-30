@@ -24,11 +24,14 @@ SOFTWARE.
  */
 
 #nullable enable
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
 
-namespace System.Collections.Generic
+namespace UnmanageUtility
 {
     /// <summary>
     /// Array class which is allocated in unmanaged memory.<para/>

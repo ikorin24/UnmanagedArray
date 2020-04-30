@@ -1,7 +1,7 @@
 # Unmanaged Array
 
 [![GitHub license](https://img.shields.io/github/license/ikorin24/UnmanagedArray?color=FA77FF)](https://github.com/ikorin24/UnmanagedArray/blob/master/LICENSE)
-[![nuget](https://img.shields.io/badge/nuget-v1.0.3-FA77FF)](https://www.nuget.org/packages/UnmanagedArray)
+[![nuget](https://img.shields.io/badge/nuget-v2.0.0-FA77FF)](https://www.nuget.org/packages/UnmanagedArray)
 
 An Effective tool for unmanaged array in C#.
 
@@ -55,6 +55,8 @@ The way of use is similar to normal array.
 Unmanaged resources are release when an instance goes through the scope.
 
 ```cs
+using UnmanageUtility;
+
 // UnmanagedArray releases its memories when it goes through the scope.
 using(var array = new UnmanagedArray<int>(10))
 {
@@ -128,3 +130,9 @@ Apache License 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
 
 - Performance improvement.
 - Add `GC.AddMemoryPressure` in constructor and `GC.RemoveMemoryPressure` in destructor.
+
+### 2020/04/30 v2.0.0
+
+[![nuget](https://img.shields.io/badge/nuget-v2.0.0-FA77FF)](https://www.nuget.org/packages/UnmanagedArray/2.0.0)
+
+- Change namespace into `UnmanageUtility`.
