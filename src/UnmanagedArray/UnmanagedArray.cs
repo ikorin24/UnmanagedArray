@@ -535,7 +535,25 @@ namespace System.Collections.Generic
         /// <typeparam name="T">Type of item in array</typeparam>
         /// <param name="source">source which initializes new array.</param>
         /// <returns>instance of <see cref="UnmanagedArray{T}"/></returns>
+        public static UnmanagedArray<T> ToUnmanagedArray<T>(this Span<T> source) where T : unmanaged
+        {
+            return new UnmanagedArray<T>(source);
+        }
+
+        /// <summary>Create a new instance of <see cref="UnmanagedArray{T}"/> initialized by source.</summary>
+        /// <typeparam name="T">Type of item in array</typeparam>
+        /// <param name="source">source which initializes new array.</param>
+        /// <returns>instance of <see cref="UnmanagedArray{T}"/></returns>
         public static UnmanagedArray<T> ToUnmanagedArray<T>(this ReadOnlyMemory<T> source) where T : unmanaged
+        {
+            return new UnmanagedArray<T>(source.Span);
+        }
+
+        /// <summary>Create a new instance of <see cref="UnmanagedArray{T}"/> initialized by source.</summary>
+        /// <typeparam name="T">Type of item in array</typeparam>
+        /// <param name="source">source which initializes new array.</param>
+        /// <returns>instance of <see cref="UnmanagedArray{T}"/></returns>
+        public static UnmanagedArray<T> ToUnmanagedArray<T>(this Memory<T> source) where T : unmanaged
         {
             return new UnmanagedArray<T>(source.Span);
         }
