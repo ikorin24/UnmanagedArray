@@ -1,7 +1,7 @@
 # Unmanaged Array
 
 [![GitHub license](https://img.shields.io/github/license/ikorin24/UnmanagedArray?color=FA77FF)](https://github.com/ikorin24/UnmanagedArray/blob/master/LICENSE)
-[![nuget](https://img.shields.io/badge/nuget-v2.0.0-FA77FF)](https://www.nuget.org/packages/UnmanagedArray)
+[![nuget](https://img.shields.io/badge/nuget-v2.0.1-FA77FF)](https://www.nuget.org/packages/UnmanagedArray)
 
 An Effective tool for unmanaged array in C#.
 
@@ -136,3 +136,7 @@ Apache License 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
 [![nuget](https://img.shields.io/badge/nuget-v2.0.0-FA77FF)](https://www.nuget.org/packages/UnmanagedArray/2.0.0)
 
 - Change namespace into `UnmanageUtility`.
+
+### 2020/06/07 v2.0.1
+
+[![nuget](https://img.shields.io/badge/nuget-v2.0.1-FA77FF)](https://www.nuget.org/packages/UnmanagedArray/2.0.1)
