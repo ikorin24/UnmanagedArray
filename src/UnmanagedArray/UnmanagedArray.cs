@@ -43,21 +43,14 @@ namespace UnmanageUtility
     public sealed class UnmanagedArray<T> : IList<T>, IReadOnlyList<T>, IList, IReadOnlyCollection<T>, IDisposable
         where T : unmanaged
     {
-        private int _length;
-        private IntPtr _array;
+        internal int _length;
+        internal IntPtr _array;
 
         /// <summary>Get pointer address of this array.</summary>
         public IntPtr Ptr { get { ThrowIfDisposed(); return _array; } }
 
         /// <summary>Get <see cref="UnmanagedArray{T}"/> is disposed.</summary>
         public bool IsDisposed => _array == IntPtr.Zero;
-
-        /// <summary>
-        /// [CAUTION] This is only for performance in case of internal access.<para/>
-        /// This may cause violational access to memory!!!!!<para/>
-        /// Access to private fields directly without any checking.<para/>
-        /// </summary>
-        internal InternalDirectAccessor DirectAccessor => new InternalDirectAccessor(this);
 
         /// <summary>Get the specific item of specific index.</summary>
         /// <param name="i">index</param>
@@ -123,7 +116,6 @@ namespace UnmanageUtility
             var bytes = sizeof(T) * length;
             if(bytes == 0) { return; }
             _array = Marshal.AllocHGlobal(bytes);
-            GC.AddMemoryPressure(bytes);
             _length = length;
             new Span<T>((void*)_array, _length).Fill(fill);
         }
@@ -140,7 +132,6 @@ namespace UnmanageUtility
             if(bytes > 0) {
                 umarray._array = Marshal.AllocHGlobal(bytes);
                 umarray._length = length;
-                GC.AddMemoryPressure(bytes);
             }
             return umarray;
         }
@@ -152,7 +143,6 @@ namespace UnmanageUtility
             var bytes = span.Length * sizeof(T);
             if(bytes == 0) { return; }
             _array = Marshal.AllocHGlobal(bytes);
-            GC.AddMemoryPressure(bytes);
             _length = span.Length;
             span.CopyTo(new Span<T>((void*)_array, _length));
         }
@@ -185,11 +175,11 @@ namespace UnmanageUtility
         /// <summary>Get index of the item</summary>
         /// <param name="item">target item</param>
         /// <returns>index (if not contain, value is -1)</returns>
-        public int IndexOf(T item)
+        public unsafe int IndexOf(T item)
         {
             ThrowIfDisposed();
             for(int i = 0; i < _length; i++) {
-                if(item.Equals(DirectAccessor.GetItem(i))) { return i; }
+                if(item.Equals(((T*)_array)[i])) { return i; }
             }
             return -1;
         }
@@ -197,11 +187,11 @@ namespace UnmanageUtility
         /// <summary>Get whether this instance contains the item.</summary>
         /// <param name="item">target item</param>
         /// <returns>true: This array contains the target item. false: not contain</returns>
-        public bool Contains(T item)
+        public unsafe bool Contains(T item)
         {
             ThrowIfDisposed();
             for(int i = 0; i < _length; i++) {
-                if(item.Equals(DirectAccessor.GetItem(i))) { return true; }
+                if(item.Equals(((T*)_array)[i])) { return true; }
             }
             return false;
         }
@@ -284,6 +274,9 @@ namespace UnmanageUtility
         /// <returns><see cref="Span{T}"/></returns>
         public unsafe Span<T> AsSpan()
         {
+            if(_length == 0) {
+                return Span<T>.Empty;
+            }
             ThrowIfDisposed();
             return new Span<T>((T*)_array, _length);
         }
@@ -322,7 +315,6 @@ namespace UnmanageUtility
             if(_array == IntPtr.Zero) { return; }
             Marshal.FreeHGlobal(_array);
             Debug.Assert(sizeof(T) * _length > 0);
-            GC.RemoveMemoryPressure(sizeof(T) * _length);
             _array = IntPtr.Zero;
         }
 
@@ -438,38 +430,6 @@ namespace UnmanageUtility
                 Current = default;
             }
         }
-
-        /// <summary>
-        /// [CAUTION] This struct is only for performance in case of internal access.<para/>
-        /// This may cause violational access to memory!!!!!<para/>
-        /// Access to private fields directly without any checking.<para/>
-        /// </summary>
-        internal readonly struct InternalDirectAccessor
-        {
-            private readonly UnmanagedArray<T> _instance;
-            internal int Length => _instance._length;
-            internal IntPtr Ptr => _instance._array;
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            internal unsafe T GetItem(int i) => ((T*)_instance._array)[i];
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            internal unsafe void SetItem(int i, T value)
-            {
-                ((T*)_instance._array)[i] = value;
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            internal unsafe void CopyFrom(IntPtr source, int start, int length)
-            {
-                var objsize = sizeof(T);
-                var byteLen = (long)(length * objsize);
-                Buffer.MemoryCopy((void*)source, (void*)(_instance._array + start * objsize), byteLen, byteLen);
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            internal InternalDirectAccessor(UnmanagedArray<T> instance) => _instance = instance;
-        }
     }
 
     /// <summary>Define extension methods of <see cref="UnmanagedArray{T}"/></summary>
@@ -479,23 +439,19 @@ namespace UnmanageUtility
         /// <typeparam name="T">Type of item in array</typeparam>
         /// <param name="source">source which initializes new array.</param>
         /// <returns>instance of <see cref="UnmanagedArray{T}"/></returns>
-        public static UnmanagedArray<T> ToUnmanagedArray<T>(this IEnumerable<T> source) where T : unmanaged
+        public static unsafe UnmanagedArray<T> ToUnmanagedArray<T>(this IEnumerable<T> source) where T : unmanaged
         {
             if(source == null) { throw new ArgumentNullException(nameof(source)); }
             if(source is T[] managedArray) {
-                var array = new UnmanagedArray<T>(managedArray.Length);
-                unsafe {
-                    fixed(T* ptr = managedArray) {
-                        array.DirectAccessor.CopyFrom((IntPtr)ptr, 0, managedArray.Length);
-                    }
-                }
+                var array = UnmanagedArray<T>.CreateWithoutZeroFill(managedArray.Length);
+                managedArray.AsSpan().CopyTo(array.AsSpan());
                 return array;
             }
             else if(source is ICollection<T> collection) {
                 var array = new UnmanagedArray<T>(collection.Count);
                 int i = 0;
                 foreach(var item in collection) {
-                    array.DirectAccessor.SetItem(i++, item);
+                    ((T*)array._array)[i++] = item;
                 }
                 return array;
             }
@@ -504,20 +460,20 @@ namespace UnmanageUtility
                 var array = new UnmanagedArray<T>(initialLen);
                 int i = 0;
                 foreach(var item in source) {
-                    if(i >= array.DirectAccessor.Length) {
+                    if(i >= array.Length) {
                         // Expand length of the array.
-                        var newArray = UnmanagedArray<T>.CreateWithoutZeroFill(array.DirectAccessor.Length * 2);
-                        newArray.DirectAccessor.CopyFrom(array.DirectAccessor.Ptr, 0, array.DirectAccessor.Length);
+                        var newArray = UnmanagedArray<T>.CreateWithoutZeroFill(array.Length * 2);
+                        array.AsSpan().CopyTo(newArray.AsSpan());
                         array.Dispose();
                         array = newArray;
                     }
-                    array.DirectAccessor.SetItem(i, item);
+                    ((T*)array._array)[i] = item;
                     i++;
                 }
-                if(array.DirectAccessor.Length != i) {
+                if(array.Length != i) {
                     // Shrink length of the array.
                     var newArray = UnmanagedArray<T>.CreateWithoutZeroFill(i);
-                    newArray.CopyFrom(array.DirectAccessor.Ptr, 0, i);
+                    array.AsSpan().Slice(0, i).CopyTo(newArray.AsSpan());
                     array.Dispose();
                     array = newArray;
                 }
