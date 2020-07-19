@@ -179,7 +179,9 @@ namespace UnmanageUtility
         {
             ThrowIfDisposed();
             for(int i = 0; i < _length; i++) {
-                if(item.Equals(((T*)_array)[i])) { return i; }
+                if(EqualityComparer<T>.Default.Equals(((T*)_array)[i], item)) {
+                    return i;
+                }
             }
             return -1;
         }
@@ -191,7 +193,9 @@ namespace UnmanageUtility
         {
             ThrowIfDisposed();
             for(int i = 0; i < _length; i++) {
-                if(item.Equals(((T*)_array)[i])) { return true; }
+                if(EqualityComparer<T>.Default.Equals(((T*)_array)[i], item)) {
+                    return true;
+                }
             }
             return false;
         }
