@@ -87,6 +87,16 @@ namespace UnmanageUtility
             }
         }
 
+        /// <summary>Create new <see cref="UnmanagedList{T}"/> instance initialized by specified <see cref="ReadOnlySpan{T}"/>.</summary>
+        /// <param name="items">items copied to <see cref="UnmanagedList{T}"/></param>
+        public UnmanagedList(ReadOnlySpan<T> items)
+        {
+            if(items.IsEmpty) { return; }
+            _array = new RawArray(items.Length);
+            items.CopyTo(_array.AsSpan());
+            _length = items.Length;
+        }
+
         /// <summary>Finalize <see cref="UnmanagedList{T}"/> instance</summary>
         ~UnmanagedList() => DisposePrivate();
 
@@ -511,6 +521,20 @@ namespace UnmanageUtility
                 // not clear by zero.
                 Marshal.FreeHGlobal(Ptr);
             }
+        }
+    }
+
+    /// <summary>Define extension methods of <see cref="UnmanagedList{T}"/></summary>
+    public static class UnmanagedListExtension
+    {
+        /// <summary>Create new <see cref="UnmanagedList{T}"/> from <see cref="ReadOnlySpan{T}"/>.</summary>
+        /// <typeparam name="T">type of elements</typeparam>
+        /// <param name="source">source <see cref="ReadOnlySpan{T}"/> to initialize <see cref="UnmanagedList{T}"/></param>
+        /// <returns>new <see cref="UnmanagedList{T}"/> initialized by <paramref name="source"/></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static UnmanagedList<T> ToUnmanagedList<T>(this ReadOnlySpan<T> source) where T : unmanaged
+        {
+            return new UnmanagedList<T>(source);
         }
     }
 }
