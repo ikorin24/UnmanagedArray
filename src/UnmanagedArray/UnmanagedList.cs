@@ -265,8 +265,10 @@ namespace UnmanageUtility
                 } while(newCapacity < min);
 
                 var newArray = new RawArray(newCapacity);
-                Buffer.MemoryCopy((void*)_array.Ptr, (void*)newArray.Ptr, newArray.GetSizeInBytes(), _array.GetSizeInBytes());
-                _array.Dispose();
+                if(_array.Length > 0) {
+                    Buffer.MemoryCopy((void*)_array.Ptr, (void*)newArray.Ptr, newArray.GetSizeInBytes(), _array.GetSizeInBytes());
+                    _array.Dispose();
+                }
                 _array = newArray;
             }
         }
