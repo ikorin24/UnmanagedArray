@@ -271,7 +271,41 @@ namespace Test
             //TestForSelf_AsSpan(items.AsSpan());
 
             //// AddRange self as IEnumerable<T>
+
+        }
+
+        [Fact]
+        public void CopyTo()
+        {
+            var items = Enumerable.Range(0, 100).ToArray();
+            var boolItems = items.Select(x => x % 3 == 0).ToArray();
             
+            // basic copy to array
+            using(var list = new UnmanagedList<int>(items.AsSpan())) {
+                var copy = new int[items.Length];
+                list.CopyTo(copy, 0);
+                for(int i = 0; i < list.Count; i++) {
+                    Assert.Equal(copy[i], list[i]);
+                }
+            }
+
+            // copy to array with offset
+            using(var list = new UnmanagedList<bool>(boolItems.AsSpan())) {
+                var offset = 13;
+                var copy = new bool[boolItems.Length + offset];
+                list.CopyTo(copy, offset);
+                for(int i = 0; i < list.Count; i++) {
+                    Assert.Equal(copy[i + offset], list[i]);
+                }
+            }
+
+            // in case of empty list
+            using(var list = new UnmanagedList<double>()) {
+                var copy = new double[0];
+                
+                // no exceptions thrown
+                list.CopyTo(copy, 0);
+            }
         }
 
 
