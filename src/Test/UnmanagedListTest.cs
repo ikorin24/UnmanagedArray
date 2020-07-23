@@ -53,30 +53,42 @@ namespace Test
         {
             static void Ctor_<T>() where T : unmanaged
             {
+                // default ctor
                 using(var list = new UnmanagedList<T>()) {
                     Assert.True(list.Capacity > 0);
                     Assert.True(list.Count == 0);
                     Assert.True(list.Ptr != IntPtr.Zero);
                 }
 
+                // ctor of setting capacity
                 using(var list = new UnmanagedList<T>(10)) {
                     Assert.True(list.Capacity == 10);
                     Assert.True(list.Count == 0);
                     Assert.True(list.Ptr != IntPtr.Zero);
                 }
 
+                // ctor of setting empty capacity
                 using(var list = new UnmanagedList<T>(0)) {
                     Assert.True(list.Capacity == 0);
                     Assert.True(list.Count == 0);
                     Assert.True(list.Ptr == IntPtr.Zero);
                 }
 
-                using(var list = new UnmanagedList<T>(10)) {
+                // ctor of initializing list from ReadOnlySpan<T>
+                using(var list = new UnmanagedList<T>(new T[10].AsSpan())) {
                     Assert.True(list.Capacity == 10);
-                    Assert.True(list.Count == 0);
+                    Assert.True(list.Count == 10);
                     Assert.True(list.Ptr != IntPtr.Zero);
                 }
 
+                // ctor of initializing list from empty ReadOnlySpan<T>
+                using(var list = new UnmanagedList<T>(ReadOnlySpan<T>.Empty)) {
+                    Assert.True(list.Capacity == 0);
+                    Assert.True(list.Count == 0);
+                    Assert.True(list.Ptr == IntPtr.Zero);
+                }
+
+                // Negative value capacity throws an exception.
                 Assert.Throws<ArgumentOutOfRangeException>(() => new UnmanagedList<T>(-1));
             }
 
@@ -229,6 +241,23 @@ namespace Test
                 }
             }
 
+            //static void TestForSelf_AsSpan(ReadOnlySpan<int> initialItems)
+            //{
+            //    using(var list = new UnmanagedList<int>(initialItems)) {
+            //        var len = 10;
+            //        var count = initialItems.Length;
+            //        for(int i = 0; i < len; i++) {
+            //            list.AddRange(list.AsSpan());
+            //            count += count;
+            //            Assert.True(list.Count == count);
+            //            Assert.True(list.Capacity >= list.Count);
+            //        }
+            //        for(int i = 0; i < list.Count; i++) {
+            //            Assert.True(list[i] == (i % len));
+            //        }
+            //    }
+            //}
+
             // AddRange T[] as ReadOnlySpan<T>
             TestForSpan(items);
 
@@ -237,6 +266,11 @@ namespace Test
 
             // AddRange IEnumerable<T>
             TestForIEnumerable(itemsEnumerable, itemsCount);
+
+            //// AddRange self as ReadOnlySpan<T>
+            //TestForSelf_AsSpan(items.AsSpan());
+
+            //// AddRange self as IEnumerable<T>
             
         }
 
