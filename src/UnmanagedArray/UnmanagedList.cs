@@ -39,6 +39,7 @@ namespace UnmanageUtility
     /// Only for unmanaged types. (e.g. int, float, recursive-unmanaged struct, and so on.)
     /// </summary>
     /// <typeparam name="T">type of list</typeparam>
+    [DebuggerTypeProxy(typeof(UnmanagedListDebuggerTypeProxy<>))]
     [DebuggerDisplay("UnmanagedList<{typeof(T).Name}>[{_length}]")]
     public sealed unsafe class UnmanagedList<T> : IList<T>, IList, IReadOnlyList<T>, IDisposable
         where T : unmanaged
@@ -537,5 +538,24 @@ namespace UnmanageUtility
         {
             return new UnmanagedList<T>(source);
         }
+    }
+
+    internal class UnmanagedListDebuggerTypeProxy<T> where T : unmanaged
+    {
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private readonly UnmanagedList<T> _entity;
+
+        [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+        public T[] Items
+        {
+            get
+            {
+                var items = new T[_entity.Count];
+                _entity.CopyTo(items, 0);
+                return items;
+            }
+        }
+
+        public UnmanagedListDebuggerTypeProxy(UnmanagedList<T> entity) => _entity = entity;
     }
 }
