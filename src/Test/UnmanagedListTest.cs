@@ -113,6 +113,65 @@ namespace Test
             ListDispose_<bool>();
         }
 
+        [Fact]
+        public void Add()
+        {
+            // Case of default capacity, of type int
+            using(var list = new UnmanagedList<int>()) {
+                var len = 100;
+                for(int i = 0; i < len; i++) {
+                    list.Add(i);
+                    Assert.True(list.Count == i + 1);
+                    Assert.True(list[i] == i);
+                }
+
+                Assert.True(list.Count == len);
+                Assert.True(list.Capacity >= list.Count);
+            }
+
+            // Case of default capacity, of type long
+            using(var list = new UnmanagedList<long>()) {
+                var len = 100;
+                for(int i = 0; i < len; i++) {
+                    list.Add(i);
+                    Assert.True(list.Count == i + 1);
+                    Assert.True(list[i] == i);
+                }
+
+                Assert.True(list.Count == len);
+                Assert.True(list.Capacity >= list.Count);
+            }
+
+            // Case of default capacity, of type bool
+            using(var list = new UnmanagedList<bool>()) {
+                var len = 100;
+                for(int i = 0; i < len; i++) {
+                    var value = i % 3 == 0;
+                    list.Add(value);
+                    Assert.True(list.Count == i + 1);
+                    Assert.True(list[i] == value);
+                }
+
+                Assert.True(list.Count == len);
+                Assert.True(list.Capacity >= list.Count);
+            }
+
+
+
+            // Case of empty capacity, of type int
+            using(var list = new UnmanagedList<int>(0)) {
+                var len = 20;
+                for(int i = 0; i < len; i++) {
+                    list.Add(i);
+                    Assert.True(list.Count == i + 1);
+                    Assert.True(list[i] == i);
+                }
+
+                Assert.True(list.Count == len);
+                Assert.True(list.Capacity >= list.Count);
+            }
+        }
+
         [StructLayout(LayoutKind.Sequential)]
         private struct TestData
         {
