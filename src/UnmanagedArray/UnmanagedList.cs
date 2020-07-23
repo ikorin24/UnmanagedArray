@@ -54,6 +54,9 @@ namespace UnmanageUtility
         /// <summary>Get capacity of current inner array.</summary>
         public int Capacity => _array.Length;
 
+        /// <summary>Get pointer of innner array</summary>
+        public IntPtr Ptr => _array.Ptr;
+
         bool ICollection<T>.IsReadOnly => false;
 
         bool IList.IsFixedSize => false;
