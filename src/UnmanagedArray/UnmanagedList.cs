@@ -386,7 +386,8 @@ namespace UnmanageUtility
         /// <param name="arrayIndex"></param>
         public void CopyTo(T[] array, int arrayIndex)
         {
-            _array.AsSpan().CopyTo(array.AsSpan(arrayIndex));
+            if(_array.Length == 0) { return; }
+            AsSpan().CopyTo(array.AsSpan(arrayIndex));
         }
 
         /// <summary>Remove specified item from list. Returns true if item is removed, false if not contains item in the list.</summary>
