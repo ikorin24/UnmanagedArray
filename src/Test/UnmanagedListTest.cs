@@ -71,6 +71,12 @@ namespace Test
                     Assert.True(list.Ptr == IntPtr.Zero);
                 }
 
+                using(var list = new UnmanagedList<T>(10)) {
+                    Assert.True(list.Capacity == 10);
+                    Assert.True(list.Count == 0);
+                    Assert.True(list.Ptr != IntPtr.Zero);
+                }
+
                 Assert.Throws<ArgumentOutOfRangeException>(() => new UnmanagedList<T>(-1));
             }
 
@@ -165,6 +171,20 @@ namespace Test
                     list.Add(i);
                     Assert.True(list.Count == i + 1);
                     Assert.True(list[i] == i);
+                }
+
+                Assert.True(list.Count == len);
+                Assert.True(list.Capacity >= list.Count);
+            }
+
+            // Case of specified capacity, of type bool
+            using(var list = new UnmanagedList<bool>(10)) {
+                var len = 100;
+                for(int i = 0; i < len; i++) {
+                    var value = i % 3 == 0;
+                    list.Add(value);
+                    Assert.True(list.Count == i + 1);
+                    Assert.True(list[i] == value);
                 }
 
                 Assert.True(list.Count == len);
