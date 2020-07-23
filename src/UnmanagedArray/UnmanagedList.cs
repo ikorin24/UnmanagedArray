@@ -151,6 +151,7 @@ namespace UnmanageUtility
                 moveSpan.CopyTo(dest);
             }
             _array[index] = item;
+            _length++;
         }
 
         /// <summary>Add items of type <typeparamref name="T"/></summary>
@@ -160,6 +161,7 @@ namespace UnmanageUtility
             if(items.IsEmpty) { return; }
             EnsureCapacity(_length + items.Length);
             items.CopyTo(_array.AsSpan(_length));
+            _length += items.Length;
         }
 
         /// <summary>Add items of type <typeparamref name="T"/></summary>
@@ -192,6 +194,7 @@ namespace UnmanageUtility
                 moveSpan.CopyTo(dest);
             }
             items.CopyTo(_array.AsSpan(index));
+            _length += items.Length;
         }
 
         /// <summary>Insert items to specified index in the list</summary>
@@ -265,8 +268,8 @@ namespace UnmanageUtility
                 } while(newCapacity < min);
 
                 var newArray = new RawArray(newCapacity);
-                if(_array.Length > 0) {
-                    Buffer.MemoryCopy((void*)_array.Ptr, (void*)newArray.Ptr, newArray.GetSizeInBytes(), _array.GetSizeInBytes());
+                if(_length > 0) {
+                    Buffer.MemoryCopy((void*)_array.Ptr, (void*)newArray.Ptr, newArray.GetSizeInBytes(), _length * sizeof(T));
                     _array.Dispose();
                 }
                 _array = newArray;
