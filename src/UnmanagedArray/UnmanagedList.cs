@@ -262,7 +262,7 @@ namespace UnmanageUtility
                     checked {
                         newCapacity = newCapacity == 0 ? DefaultCapacity : newCapacity * 2;
                     }
-                } while(newCapacity >= min);
+                } while(newCapacity < min);
 
                 var newArray = new RawArray(newCapacity);
                 Buffer.MemoryCopy((void*)_array.Ptr, (void*)newArray.Ptr, newArray.GetSizeInBytes(), _array.GetSizeInBytes());
