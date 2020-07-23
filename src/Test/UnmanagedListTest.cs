@@ -192,6 +192,55 @@ namespace Test
             }
         }
 
+        [Fact]
+        public void AddRange()
+        {
+            var itemsCount = 10;
+            var itemsEnumerable = Enumerable.Range(0, itemsCount);
+            var items = itemsEnumerable.ToArray();
+
+            static void TestForSpan(ReadOnlySpan<int> span)
+            {
+                using(var list = new UnmanagedList<int>()) {
+                    var len = 10;
+                    for(int i = 0; i < len; i++) {
+                        list.AddRange(span);
+                        Assert.True(list.Count == span.Length * (i + 1));
+                        Assert.True(list.Capacity >= list.Count);
+                    }
+                    for(int i = 0; i < list.Count; i++) {
+                        Assert.True(list[i] == (i % len));
+                    }
+                }
+            }
+
+            static void TestForIEnumerable(IEnumerable<int> ienumerable, int count)
+            {
+                using(var list = new UnmanagedList<int>()) {
+                    var len = 10;
+                    for(int i = 0; i < len; i++) {
+                        list.AddRange(ienumerable);
+                        Assert.True(list.Count == count * (i + 1));
+                        Assert.True(list.Capacity >= list.Count);
+                    }
+                    for(int i = 0; i < list.Count; i++) {
+                        Assert.True(list[i] == (i % len));
+                    }
+                }
+            }
+
+            // AddRange T[] as ReadOnlySpan<T>
+            TestForSpan(items);
+
+            // AddRange T[] as IEnumerable<T>
+            TestForIEnumerable(items, items.Length);
+
+            // AddRange IEnumerable<T>
+            TestForIEnumerable(itemsEnumerable, itemsCount);
+            
+        }
+
+
         [StructLayout(LayoutKind.Sequential)]
         private struct TestData
         {
