@@ -609,6 +609,26 @@ namespace UnmanageUtility
     /// <summary>Define extension methods of <see cref="UnmanagedList{T}"/></summary>
     public static class UnmanagedListExtension
     {
+        /// <summary>Create new <see cref="UnmanagedList{T}"/> from array of type <typeparamref name="T"/>.</summary>
+        /// <typeparam name="T">type of elements</typeparam>
+        /// <param name="source">source array to initialize <see cref="UnmanagedList{T}"/></param>
+        /// <returns>new <see cref="UnmanagedList{T}"/> initialized by <paramref name="source"/></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static UnmanagedList<T> ToUnmanagedList<T>(this T[] source) where T : unmanaged
+        {
+            return new UnmanagedList<T>(source);
+        }
+
+        /// <summary>Create new <see cref="UnmanagedList{T}"/> from <see cref="Span{T}"/>.</summary>
+        /// <typeparam name="T">type of elements</typeparam>
+        /// <param name="source">source <see cref="Span{T}"/> to initialize <see cref="UnmanagedList{T}"/></param>
+        /// <returns>new <see cref="UnmanagedList{T}"/> initialized by <paramref name="source"/></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static UnmanagedList<T> ToUnmanagedList<T>(this Span<T> source) where T : unmanaged
+        {
+            return new UnmanagedList<T>(source);
+        }
+
         /// <summary>Create new <see cref="UnmanagedList{T}"/> from <see cref="ReadOnlySpan{T}"/>.</summary>
         /// <typeparam name="T">type of elements</typeparam>
         /// <param name="source">source <see cref="ReadOnlySpan{T}"/> to initialize <see cref="UnmanagedList{T}"/></param>
