@@ -92,6 +92,17 @@ namespace UnmanageUtility
             }
         }
 
+        /// <summary>Create new <see cref="UnmanagedList{T}"/> instance initialized by specified array.</summary>
+        /// <param name="items">items copied to <see cref="UnmanagedList{T}"/></param>
+        public UnmanagedList(T[] items)
+        {
+            if(items is null) { ThrowHelper.ArgumentNull(nameof(items)); }
+            if(items!.Length == 0) { return; }
+            _array = new RawArray(items!.Length);
+            items.CopyTo(_array.AsSpan());
+            _length = items.Length;
+        }
+
         /// <summary>Create new <see cref="UnmanagedList{T}"/> instance initialized by specified <see cref="ReadOnlySpan{T}"/>.</summary>
         /// <param name="items">items copied to <see cref="UnmanagedList{T}"/></param>
         public UnmanagedList(ReadOnlySpan<T> items)
@@ -171,6 +182,15 @@ namespace UnmanageUtility
 
         /// <summary>Add items of type <typeparamref name="T"/></summary>
         /// <param name="items">items to add to list</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void AddRange(T[] items)
+        {
+            if(items is null) { ThrowHelper.ArgumentNull(nameof(items)); }
+            AddRange(items.AsSpan());
+        }
+
+        /// <summary>Add items of type <typeparamref name="T"/></summary>
+        /// <param name="items">items to add to list</param>
         public void AddRange(ReadOnlySpan<T> items)
         {
             if(items.IsEmpty) { return; }
@@ -182,6 +202,16 @@ namespace UnmanageUtility
         /// <summary>Add items of type <typeparamref name="T"/></summary>
         /// <param name="items">items to add to list</param>
         public void AddRange(IEnumerable<T> items) => InsertRange(_length, items);
+
+        /// <summary>Insert items to specified index in the list</summary>
+        /// <param name="index">index to insert</param>
+        /// <param name="items">items to insert</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void InsertRange(int index, T[] items)
+        {
+            if(items is null) { ThrowHelper.ArgumentNull(nameof(items)); }
+            InsertRange(index, items.AsSpan());
+        }
 
         /// <summary>Insert items to specified index in the list</summary>
         /// <param name="index">index to insert</param>

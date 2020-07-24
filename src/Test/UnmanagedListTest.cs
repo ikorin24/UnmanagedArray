@@ -64,11 +64,25 @@ namespace Test
                     Assert.True(list.Ptr == IntPtr.Zero);
                 }
 
+                // ctor of initializing list from T[]
+                using(var list = new UnmanagedList<T>(new T[10])) {
+                    Assert.True(list.Capacity == 10);
+                    Assert.True(list.Count == 10);
+                    Assert.True(list.Ptr != IntPtr.Zero);
+                }
+
                 // ctor of initializing list from ReadOnlySpan<T>
                 using(var list = new UnmanagedList<T>(new T[10].AsSpan())) {
                     Assert.True(list.Capacity == 10);
                     Assert.True(list.Count == 10);
                     Assert.True(list.Ptr != IntPtr.Zero);
+                }
+
+                // ctor of initializing list from empty T[]
+                using(var list = new UnmanagedList<T>(new T[0])) {
+                    Assert.True(list.Capacity == 0);
+                    Assert.True(list.Count == 0);
+                    Assert.True(list.Ptr == IntPtr.Zero);
                 }
 
                 // ctor of initializing list from empty ReadOnlySpan<T>
@@ -77,6 +91,8 @@ namespace Test
                     Assert.True(list.Count == 0);
                     Assert.True(list.Ptr == IntPtr.Zero);
                 }
+
+                Assert.Throws<ArgumentNullException>(() => new UnmanagedList<T>((T[])null!));
 
                 // Negative value capacity throws an exception.
                 Assert.Throws<ArgumentOutOfRangeException>(() => new UnmanagedList<T>(-1));
