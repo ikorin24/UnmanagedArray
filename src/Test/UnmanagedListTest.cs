@@ -349,22 +349,22 @@ namespace Test
                 }
             }
 
-            //static void TestForSelf_AsSpan(ReadOnlySpan<int> initialItems)
-            //{
-            //    using(var list = new UnmanagedList<int>(initialItems)) {
-            //        var len = 10;
-            //        var count = initialItems.Length;
-            //        for(int i = 0; i < len; i++) {
-            //            list.AddRange(list.AsSpan());
-            //            count += count;
-            //            Assert.True(list.Count == count);
-            //            Assert.True(list.Capacity >= list.Count);
-            //        }
-            //        for(int i = 0; i < list.Count; i++) {
-            //            Assert.True(list[i] == (i % len));
-            //        }
-            //    }
-            //}
+            static void TestForSelf_AsSpan(ReadOnlySpan<int> initialItems)
+            {
+                using(var list = new UnmanagedList<int>(initialItems)) {
+                    var len = 10;
+                    var count = initialItems.Length;
+                    for(int i = 0; i < len; i++) {
+                        list.AddRange(list.AsSpan());
+                        count += count;
+                        Assert.True(list.Count == count);
+                        Assert.True(list.Capacity >= list.Count);
+                    }
+                    for(int i = 0; i < list.Count; i++) {
+                        Assert.True(list[i] == (i % len));
+                    }
+                }
+            }
 
             // AddRange T[] as ReadOnlySpan<T>
             TestForSpan(items);
@@ -375,8 +375,8 @@ namespace Test
             // AddRange IEnumerable<T>
             TestForIEnumerable(itemsEnumerable, itemsCount);
 
-            //// AddRange self as ReadOnlySpan<T>
-            //TestForSelf_AsSpan(items.AsSpan());
+            // AddRange self as ReadOnlySpan<T>
+            TestForSelf_AsSpan(items.AsSpan());
 
             //// AddRange self as IEnumerable<T>
 

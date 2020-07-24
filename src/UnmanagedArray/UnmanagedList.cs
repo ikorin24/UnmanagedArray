@@ -194,8 +194,29 @@ namespace UnmanageUtility
         public void AddRange(ReadOnlySpan<T> items)
         {
             if(items.IsEmpty) { return; }
-            EnsureCapacity(_length + items.Length);
-            items.CopyTo(_array.AsSpan(_length));
+
+            // Check whether items are part of self.
+            if(SelfContainMemory(ref MemoryMarshal.GetReference(items))) {
+
+                // Ensure capacity without disposing old array
+                // because it contains added items.
+                if(EnsureCapacityWithoutDisposingOld(_length + items.Length, out var old)) {
+                    
+                    // Dispose old array after copying.
+                    using(old) {
+                        items.CopyTo(_array.AsSpan(_length));
+                    }
+                }
+                else {
+                    // In the case that no swapping inner array happend when ensure capacity.
+                    Debug.Assert(old.Length == 0 && old.Ptr == default);
+                    items.CopyTo(_array.AsSpan(_length));
+                }
+            }
+            else {
+                EnsureCapacity(_length + items.Length);
+                items.CopyTo(_array.AsSpan(_length));
+            }
             _length += items.Length;
         }
 
@@ -224,12 +245,8 @@ namespace UnmanageUtility
             if(items.IsEmpty) { return; }
             EnsureCapacity(_length + items.Length);
 
-            // Check whether items is part of self.
-            ref var itemsHead = ref MemoryMarshal.GetReference(items);
-            if(!Unsafe.IsAddressLessThan(ref itemsHead, ref _array[0]) &&
-               !Unsafe.IsAddressGreaterThan(ref itemsHead, ref _array[_array.Length - 1])) {
-
-                // TODO: in case of inserting to self.
+            // Check whether items are part of self.
+            if(SelfContainMemory(ref MemoryMarshal.GetReference(items))) {
                 throw new NotImplementedException();
             }
 
@@ -250,7 +267,7 @@ namespace UnmanageUtility
             // Inserting to end of the list is legal.
             if((uint)index > (uint)_length) { ThrowHelper.ArgumentOutOfRange(nameof(index)); }
             if(items is null) { ThrowHelper.ArgumentNull(nameof(items)); }
-            
+
             if(items is UnmanagedList<T> ul) {
                 InsertRange(index, ul.AsSpan());
             }
@@ -303,6 +320,13 @@ namespace UnmanageUtility
 
         private void EnsureCapacity(int min)
         {
+            if(EnsureCapacityWithoutDisposingOld(min, out var old)) {
+                old.Dispose();
+            }
+        }
+
+        private bool EnsureCapacityWithoutDisposingOld(int min, out RawArray old)
+        {
             if(_array.Length < min) {
                 int newCapacity = _array.Length;
                 do {
@@ -315,10 +339,33 @@ namespace UnmanageUtility
                 var newArray = new RawArray(newCapacity);
                 if(_length > 0) {
                     Buffer.MemoryCopy((void*)_array.Ptr, (void*)newArray.Ptr, newArray.GetSizeInBytes(), _length * sizeof(T));
-                    _array.Dispose();
                 }
+                old = _array;
                 _array = newArray;
+                return true;
             }
+            else {
+                old = default;
+                return false;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool SelfContainMemory(ref T target)
+        {
+            // [memory space]
+            // ← small address                      big address →
+            //       ... | _array[0] | ... | _array[last] | ...
+            //
+            //       ... | ////////////////////////////// | ...
+            //       ... |     memory range of _array     | ...
+            //       ... | ////////////////////////////// | ...
+            //
+            //       ... |     !LessThan(ref target, ref _array[0])
+            // !GreaterThan(ref target, ref _array[last]) | ...
+
+            return !Unsafe.IsAddressLessThan(ref target, ref _array[0]) &&
+                   !Unsafe.IsAddressGreaterThan(ref target, ref _array[_array.Length - 1]);
         }
 
         /// <summary>
@@ -560,7 +607,7 @@ namespace UnmanageUtility
         /// <summary>
         /// Raw array struct. This struct checks no index boundary and any other safety.
         /// </summary>
-        private readonly struct RawArray
+        private readonly struct RawArray : IDisposable
         {
             /// <summary>Raw array pointer</summary>
             public readonly IntPtr Ptr;
@@ -600,7 +647,11 @@ namespace UnmanageUtility
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Dispose()
             {
-                // not clear by zero.
+                // Clear memory if debug for easy detecting invalid memory access.
+                // (e.g. Accessing to memory after free)
+#if DEBUG
+                AsSpan().Clear();
+#endif
                 Marshal.FreeHGlobal(Ptr);
             }
         }
