@@ -274,6 +274,9 @@ namespace UnmanageUtility
             else if(items is T[] a) {
                 InsertRange(index, a.AsSpan());
             }
+            else if(items is UnmanagedArray<T> ua) {
+                InsertRange(index, ua.AsSpan());
+            }
 
             // TODO: When items are ICollection<T>, which cases are faster;
             //       Copy items to array buffer and re-copy it to inner memory, or insert each item by iterating.
