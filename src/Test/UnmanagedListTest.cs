@@ -478,6 +478,18 @@ namespace Test
             }
         }
 
+        [Fact]
+        public void Clear()
+        {
+            using(var list = new UnmanagedList<int>(Enumerable.Range(0, 100).ToArray().AsSpan())) {
+                var capacity = list.Capacity;
+                Assert.True(list.Count == 100);
+                list.Clear();
+                Assert.True(list.Count == 0);
+                Assert.Equal(capacity, list.Capacity);
+            }
+        }
+
 
         [StructLayout(LayoutKind.Sequential)]
         private struct TestData
