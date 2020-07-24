@@ -171,7 +171,7 @@ namespace UnmanageUtility
                 EnsureCapacity(_array.Length + 1);
             }
 
-            if(index < _array.Length) {
+            if(index < _length) {
                 var moveSpan = _array.AsSpan(index, _length - index);
                 var dest = _array.AsSpan(index + 1, moveSpan.Length);
                 moveSpan.CopyTo(dest);
