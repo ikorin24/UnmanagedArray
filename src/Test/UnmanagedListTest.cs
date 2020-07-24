@@ -381,6 +381,55 @@ namespace Test
             }
         }
 
+        [Fact]
+        public void AsSpan()
+        {
+            using(var list = new UnmanagedList<int>()) {
+                Assert.True(list.AsSpan().IsEmpty);
+            }
+
+            using(var list = new UnmanagedList<int>(Enumerable.Range(0, 100).ToArray().AsSpan())) {
+                var span = list.AsSpan();
+                for(int i = 0; i < span.Length; i++) {
+                    Assert.Equal(span[i], list[i]);
+                    Assert.True(Unsafe.AreSame(ref span[i], ref list.GetReference(i)));
+                }
+            }
+
+            using(var list = new UnmanagedList<int>(Enumerable.Range(0, 100).ToArray().AsSpan())) {
+                var span = list.AsSpan(20);
+                for(int i = 0; i < span.Length - 20; i++) {
+                    Assert.Equal(span[i], list[i + 20]);
+                    Assert.True(Unsafe.AreSame(ref span[i], ref list.GetReference(i + 20)));
+                }
+            }
+
+            using(var list = new UnmanagedList<int>(Enumerable.Range(0, 100).ToArray().AsSpan())) {
+                var span = list.AsSpan(20, 80);
+                for(int i = 0; i < 80; i++) {
+                    Assert.Equal(span[i], list[i + 20]);
+                    Assert.True(Unsafe.AreSame(ref span[i], ref list.GetReference(i + 20)));
+                }
+
+                Assert.True(list.AsSpan(20, 0).IsEmpty);
+            }
+
+            using(var list = new UnmanagedList<int>(Enumerable.Range(0, 100).ToArray().AsSpan())) {
+                Assert.Throws<ArgumentOutOfRangeException>(() => list.AsSpan(-1));
+                Assert.Throws<ArgumentOutOfRangeException>(() => list.AsSpan(100));
+                Assert.Throws<ArgumentOutOfRangeException>(() => list.AsSpan(20, 81));
+                Assert.Throws<ArgumentOutOfRangeException>(() => list.AsSpan(20, -1));
+                Assert.Throws<ArgumentOutOfRangeException>(() => list.AsSpan(-1, 100));
+            }
+
+            {
+                var list = new UnmanagedList<int>(Enumerable.Range(0, 100).ToArray().AsSpan());
+                list.Dispose();
+                // AsSpan() throws no exceptions after Dispose().
+                Assert.True(list.AsSpan().IsEmpty);
+            }
+        }
+
 
         [StructLayout(LayoutKind.Sequential)]
         private struct TestData
