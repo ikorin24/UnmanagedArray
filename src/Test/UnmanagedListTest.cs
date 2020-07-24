@@ -609,6 +609,29 @@ namespace Test
             }
         }
 
+        [Fact]
+        public void Insert()
+        {
+            using(var list = new UnmanagedList<int>()) {
+                list.Insert(0, 1);
+                list.Insert(0, 2);
+                list.Insert(0, 3);
+                list.Insert(0, 4);
+                list.Insert(2, 5);
+                list.Insert(5, 6);
+
+                // list : [4, 3, 5, 2, 1, 6]
+                Assert.Equal(6, list.Count);
+                Assert.Equal(4, list[0]);
+                Assert.Equal(3, list[1]);
+                Assert.Equal(5, list[2]);
+                Assert.Equal(2, list[3]);
+                Assert.Equal(1, list[4]);
+                Assert.Equal(6, list[5]);
+
+            }
+        }
+
         [StructLayout(LayoutKind.Sequential)]
         private struct TestData
         {
