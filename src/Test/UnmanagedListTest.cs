@@ -439,6 +439,12 @@ namespace Test
                 }
                 Assert.Equal(-1, list.IndexOf(3));
                 Assert.Equal(-1, list.IndexOf(200));
+
+                list.Clear();
+
+                for(int i = 0; i < 100; i++) {
+                    Assert.Equal(-1, list.IndexOf(i + 10));
+                }
             }
         }
 
@@ -487,6 +493,28 @@ namespace Test
                 list.Clear();
                 Assert.True(list.Count == 0);
                 Assert.Equal(capacity, list.Capacity);
+            }
+        }
+
+        [Fact]
+        public void Contains()
+        {
+            using(var list = new UnmanagedList<int>(Enumerable.Range(0, 100).ToArray().AsSpan())) {
+                Assert.Equal(100, list.Count);
+                for(int i = 0; i < list.Count; i++) {
+                    Assert.True(list.Contains(i) == true);
+                }
+
+                Assert.True(list.Contains(-1) == false);
+                Assert.True(list.Contains(-10) == false);
+                Assert.True(list.Contains(100) == false);
+                Assert.True(list.Contains(1000) == false);
+
+                list.Clear();
+
+                for(int i = 0; i < 100; i++) {
+                    Assert.True(list.Contains(i) == false);
+                }
             }
         }
 
