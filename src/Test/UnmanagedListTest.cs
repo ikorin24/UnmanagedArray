@@ -38,17 +38,6 @@ namespace Test
 {
     public unsafe class UnmanagedListTest
     {
-        private static readonly Type[] TargetTypes = new Type[]
-        {
-            typeof(bool), typeof(decimal),
-            typeof(sbyte), typeof(byte),
-            typeof(short), typeof(ushort),
-            typeof(int), typeof(uint),
-            typeof(long), typeof(ulong),
-            typeof(float), typeof(double),
-            typeof(IntPtr), typeof(TestData),
-        };
-
         [Fact]
         public void Ctor()
         {
@@ -107,6 +96,34 @@ namespace Test
             Ctor_<double>();
             Ctor_<IntPtr>();
             Ctor_<TestData>();
+        }
+
+        [Fact]
+        public void Ptr()
+        {
+            var list = new UnmanagedList<int>();
+
+            // Ptr is IntPtr.Zero when Count == 0
+            Assert.True(list.Count == 0);
+            Assert.Equal(IntPtr.Zero, list.Ptr);
+
+            for(int i = 0; i < 10; i++) {
+                list.Add(i);
+                Assert.NotEqual(IntPtr.Zero, list.Ptr);
+            }
+
+            unsafe {
+                var ptr = (int*)list.Ptr;
+                for(int i = 0; i < 10; i++) {
+                    Assert.Equal(i, ptr[i]);
+                }
+            }
+
+            list.Dispose();
+
+            // Ptr is IntPtr.Zero after Dispose()
+            Assert.True(list.Count == 0);
+            Assert.Equal(IntPtr.Zero, list.Ptr);
         }
 
         [Fact]
