@@ -537,6 +537,61 @@ namespace Test
             }
         }
 
+        [Fact]
+        public void Enumerate()
+        {
+            // Iterate in three ways
+            using(var list = new UnmanagedList<int>(Enumerable.Range(0, 100).ToArray().AsSpan())) {
+
+                // Iterate by foreach
+                {
+                    var i = 0;
+                    foreach(var item in list) {
+                        Assert.Equal(i, item);
+                        i++;
+                    }
+                }
+
+                // Iterate by foreach as IEnumerable<T>
+                {
+                    var i = 0;
+                    foreach(var item in list.AsEnumerable()) {
+                        Assert.Equal(i, item);
+                        i++;
+                    }
+                }
+
+                // Iterate by foreach as IEnumerable
+                {
+                    var i = 0;
+                    foreach(var item in (System.Collections.IEnumerable)list) {
+                        Assert.Equal(i, (int)item);
+                        i++;
+                    }
+                }
+            }
+
+
+            // Iterate empty list in three ways
+            using(var list = new UnmanagedList<int>()) {
+                Assert.True(list.Count == 0);
+
+                // Iterate by foreach
+                foreach(var item in list) {
+                    throw new Exception("invalid");
+                }
+
+                // Iterate by foreach as IEnumerable<T>
+                foreach(var item in list.AsEnumerable()) {
+                    throw new Exception("invalid");
+                }
+
+                // Iterate by foreach as IEnumerable
+                foreach(var item in (System.Collections.IEnumerable)list) {
+                    throw new Exception("invalid");
+                }
+            }
+        }
 
         [StructLayout(LayoutKind.Sequential)]
         private struct TestData
