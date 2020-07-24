@@ -364,7 +364,8 @@ namespace UnmanageUtility
             //       ... |     !LessThan(ref target, ref _array[0])
             // !GreaterThan(ref target, ref _array[last]) | ...
 
-            return !Unsafe.IsAddressLessThan(ref target, ref _array[0]) &&
+            return _array.Length > 0 &&
+                   !Unsafe.IsAddressLessThan(ref target, ref _array[0]) &&
                    !Unsafe.IsAddressGreaterThan(ref target, ref _array[_array.Length - 1]);
         }
 
