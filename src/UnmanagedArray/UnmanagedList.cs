@@ -55,8 +55,14 @@ namespace UnmanageUtility
         /// <summary>Get capacity of current inner array.</summary>
         public int Capacity => _array.Length;
 
-        /// <summary>Get pointer of innner array</summary>
-        public IntPtr Ptr => _array.Ptr;
+        ///// <summary>Get pointer of innner array</summary>
+        //public IntPtr Ptr => _length == 0 ? IntPtr.Zero : _array.Ptr;
+        /// <summary>Get pointer of innner array. (Returns <see cref="IntPtr.Zero"/> if <see cref="Count"/> == 0).</summary>
+        public IntPtr Ptr
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => (IntPtr)Unsafe.AsPointer(ref GetReference());
+        }
 
         bool ICollection<T>.IsReadOnly => false;
 

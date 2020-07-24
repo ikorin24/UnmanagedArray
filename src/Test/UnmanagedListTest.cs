@@ -58,14 +58,14 @@ namespace Test
                 using(var list = new UnmanagedList<T>()) {
                     Assert.True(list.Capacity > 0);
                     Assert.True(list.Count == 0);
-                    Assert.True(list.Ptr != IntPtr.Zero);
+                    Assert.True(list.Ptr == IntPtr.Zero);
                 }
 
                 // ctor of setting capacity
                 using(var list = new UnmanagedList<T>(10)) {
                     Assert.True(list.Capacity == 10);
                     Assert.True(list.Count == 0);
-                    Assert.True(list.Ptr != IntPtr.Zero);
+                    Assert.True(list.Ptr == IntPtr.Zero);
                 }
 
                 // ctor of setting empty capacity
@@ -186,7 +186,9 @@ namespace Test
         {
             static void ListDispose_<T>() where T : unmanaged
             {
-                var list = new UnmanagedList<T>();
+                var list = new UnmanagedList<T>(new T[5].AsSpan());
+                Assert.True(list.Count == 5);
+                Assert.True(list.Capacity >= 5);
                 Assert.True(list.Ptr != IntPtr.Zero);
                 list.Dispose();
 
