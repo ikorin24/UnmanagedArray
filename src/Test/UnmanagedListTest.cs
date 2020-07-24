@@ -430,6 +430,54 @@ namespace Test
             }
         }
 
+        [Fact]
+        public void IndexOf()
+        {
+            using(var list = new UnmanagedList<int>(Enumerable.Range(10, 100).ToArray().AsSpan())) {
+                for(int i = 0; i < list.Count; i++) {
+                    Assert.Equal(i, list.IndexOf(i + 10));
+                }
+                Assert.Equal(-1, list.IndexOf(3));
+                Assert.Equal(-1, list.IndexOf(200));
+            }
+        }
+
+        [Fact]
+        public void RemoveAt()
+        {
+            using(var list = new UnmanagedList<int>(Enumerable.Range(0, 100).ToArray().AsSpan())) {
+                for(int i = 0; i < 100; i++) {
+                    Assert.Equal(i, list[0]);
+                    list.RemoveAt(0);
+                    Assert.Equal(100 - i - 1, list.Count);
+                }
+
+                // list is empty
+
+                Assert.Throws<ArgumentOutOfRangeException>(() => list.RemoveAt(0));
+                Assert.Throws<ArgumentOutOfRangeException>(() => list.RemoveAt(-1));
+                Assert.Throws<ArgumentOutOfRangeException>(() => list.RemoveAt(1));
+            }
+
+            using(var list = new UnmanagedList<int>(Enumerable.Range(0, 100).ToArray().AsSpan())) {
+                Assert.Throws<ArgumentOutOfRangeException>(() => list.RemoveAt(-1));
+                Assert.Throws<ArgumentOutOfRangeException>(() => list.RemoveAt(100));
+
+                Assert.Equal(100, list.Count);
+                Assert.True(list.Capacity >= list.Count);
+
+                for(int i = 0; i < 30; i++) {
+                    Assert.Equal(70 + i, list[70]);
+                    list.RemoveAt(70);
+                    Assert.Equal(100 - i - 1, list.Count);
+                }
+
+                for(int i = 0; i < list.Count; i++) {
+                    Assert.Equal(i, list[i]);
+                }
+            }
+        }
+
 
         [StructLayout(LayoutKind.Sequential)]
         private struct TestData
