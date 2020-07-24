@@ -343,7 +343,7 @@ namespace UnmanageUtility
         /// <returns>index in the list, or -1 if not contains <paramref name="item"/></returns>
         public int IndexOf(T item)
         {
-            for(int i = 0; i < _array.Length; i++) {
+            for(int i = 0; i < _length; i++) {
                 if(EqualityComparer<T>.Default.Equals(_array[i], item)) {
                     return i;
                 }
@@ -374,7 +374,7 @@ namespace UnmanageUtility
         /// <returns>true if contains, false if not contain</returns>
         public bool Contains(T item)
         {
-            for(int i = 0; i < _array.Length; i++) {
+            for(int i = 0; i < _length; i++) {
                 if(EqualityComparer<T>.Default.Equals(_array[i], item)) {
                     return true;
                 }
