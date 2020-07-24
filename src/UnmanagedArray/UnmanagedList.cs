@@ -412,11 +412,12 @@ namespace UnmanageUtility
 
         /// <summary>Get enumerator of the list</summary>
         /// <returns>enumerator of the list</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Enumerator GetEnumerator() => new Enumerator(this);
 
-        IEnumerator<T> IEnumerable<T>.GetEnumerator() => new Enumerator(this);
+        IEnumerator<T> IEnumerable<T>.GetEnumerator() => new EnumeratorClass(this);
 
-        IEnumerator IEnumerable.GetEnumerator() => new Enumerator(this);
+        IEnumerator IEnumerable.GetEnumerator() => new EnumeratorClass(this);
 
         int IList.Add(object value)
         {
@@ -443,7 +444,52 @@ namespace UnmanageUtility
             private T _current;
             private int _index;
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             internal Enumerator(UnmanagedList<T> list)
+            {
+                _list = list;
+                _index = 0;
+                _current = default;
+            }
+
+            /// <summary>Get current item</summary>
+            public T Current => _current;
+
+            object IEnumerator.Current => _current;
+
+            /// <summary>Dispose this enumerator (but do nothing)</summary>
+            public void Dispose() { }   // nop
+
+            /// <summary>Move to next item</summary>
+            /// <returns>true if continue, false to end</returns>
+            public bool MoveNext()
+            {
+                if(_index < _list._length) {
+                    _current = _list[_index];
+                    _index++;
+                    return true;
+                }
+                else {
+                    return false;
+                }
+            }
+
+            /// <summary>Reset enumerator</summary>
+            public void Reset()
+            {
+                _index = 0;
+                _current = default;
+            }
+        }
+
+        /// <summary>Enumerator class of <see cref="UnmanagedList{T}"/></summary>
+        public class EnumeratorClass : IEnumerator<T>
+        {
+            private readonly UnmanagedList<T> _list;
+            private T _current;
+            private int _index;
+
+            internal EnumeratorClass(UnmanagedList<T> list)
             {
                 _list = list;
                 _index = 0;
