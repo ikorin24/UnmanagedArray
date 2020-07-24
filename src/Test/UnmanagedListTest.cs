@@ -27,6 +27,7 @@ SOFTWARE.
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -106,6 +107,78 @@ namespace Test
             Ctor_<double>();
             Ctor_<IntPtr>();
             Ctor_<TestData>();
+        }
+
+        [Fact]
+        public void Indexer()
+        {
+            using(var list = new UnmanagedList<int>()) {
+                Assert.Throws<ArgumentOutOfRangeException>(() => list[0] = default);
+                Assert.Throws<ArgumentOutOfRangeException>(() => list[1] = default);
+                Assert.Throws<ArgumentOutOfRangeException>(() => list[-1] = default);
+            }
+
+            var items = Enumerable.Range(0, 10).ToArray();
+            using(var list = new UnmanagedList<int>(items.AsSpan())) {
+                Assert.Throws<ArgumentOutOfRangeException>(() => list[-1] = default);
+                Assert.Throws<ArgumentOutOfRangeException>(() => list[10] = default);
+                Assert.Throws<ArgumentOutOfRangeException>(() => list[20] = default);
+
+                for(int i = 0; i < list.Count; i++) {
+                    Assert.Equal(i, list[i]);
+                }
+
+                var firstItem = list[0];
+                for(int i = 0; i < list.Count - 1; i++) {
+                    list[i] = list[i + 1];
+                }
+                list[list.Count - 1] = firstItem;
+
+                for(int i = 0; i < list.Count; i++) {
+                    Assert.Equal((i + 1) % list.Count, list[i]);
+                }
+            }
+        }
+
+        [Fact]
+        public void GetReference()
+        {
+            ref var nullRef = ref Unsafe.AsRef<int>((void*)null);
+            
+            using(var list = new UnmanagedList<int>()) {
+
+                // GetReference() throws no exceptions when list is empty.
+                // It returns reference to null.
+                Assert.True(Unsafe.AreSame(ref list.GetReference(), ref nullRef));
+
+                // GetReference(int) throws ArgumentOutOfRangeException
+                Assert.Throws<ArgumentOutOfRangeException>(() => list.GetReference(0));
+
+                list.Add(10);
+                Assert.True(list.Count == 1);
+                Assert.Equal(10, list.GetReference());
+                Assert.Equal(10, list.GetReference(0));
+
+                list.GetReference() = 20;
+                Assert.Equal(20, list[0]);
+
+                list.GetReference(0) = 0;
+                Assert.Equal(0, list[0]);
+
+
+                list.Add(1);
+                list.Add(2);
+                list.Add(3);
+                list.Add(4);
+                Assert.True(list.Count == 5);
+                Assert.Equal(0, list.GetReference());
+                for(int i = 0; i < list.Count; i++) {
+                    Assert.Equal(i, list.GetReference(i));
+                }
+                Assert.Throws<ArgumentOutOfRangeException>(() => list.GetReference(-1));
+                Assert.Throws<ArgumentOutOfRangeException>(() => list.GetReference(5));
+                Assert.Throws<ArgumentOutOfRangeException>(() => list.GetReference(10));
+            }
         }
 
         [Fact]
