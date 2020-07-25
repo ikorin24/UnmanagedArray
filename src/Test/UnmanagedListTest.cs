@@ -554,6 +554,78 @@ namespace Test
         }
 
         [Fact]
+        public void Remove()
+        {
+            using(var list = new UnmanagedList<int>()) {
+                list.Add(5);
+                Assert.True(list.Count == 1);
+                Assert.True(list[0] == 5);
+
+                Assert.True(list.Remove(5));
+                Assert.True(list.Count == 0);
+            }
+
+            using(var list = new UnmanagedList<int>()) {
+                for(int i = 0; i < 50; i++) {
+                    list.Add(i);
+                }
+                for(int i = 0; i < 50; i++) {
+                    Assert.True(list.Remove(i));
+                    Assert.True(list.Count == 50 - i - 1);
+                }
+            }
+
+            using(var list = new UnmanagedList<int>()) {
+                list.Add(0);
+                list.Add(1);
+                list.Add(2);
+                list.Add(3);
+                list.Add(4);
+                list.Add(5);
+                Assert.True(list.Count == 6);
+
+                Assert.True(list.Remove(4));
+                Assert.True(list.Count == 5);
+                Assert.True(list[0] == 0);
+                Assert.True(list[1] == 1);
+                Assert.True(list[2] == 2);
+                Assert.True(list[3] == 3);
+                Assert.True(list[4] == 5);
+
+                Assert.True(list.Remove(2));
+                Assert.True(list.Count == 4);
+                Assert.True(list[0] == 0);
+                Assert.True(list[1] == 1);
+                Assert.True(list[2] == 3);
+                Assert.True(list[3] == 5);
+
+                // false if not exist
+                Assert.False(list.Remove(2));
+
+                Assert.True(list.Remove(5));
+                Assert.True(list.Count == 3);
+                Assert.True(list[0] == 0);
+                Assert.True(list[1] == 1);
+                Assert.True(list[2] == 3);
+
+                Assert.True(list.Remove(0));
+                Assert.True(list.Count == 2);
+                Assert.True(list[0] == 1);
+                Assert.True(list[1] == 3);
+
+                Assert.True(list.Remove(1));
+                Assert.True(list.Count == 1);
+                Assert.True(list[0] == 3);
+
+                Assert.True(list.Remove(3));
+                Assert.True(list.Count == 0);
+
+                // false if not exist
+                Assert.False(list.Remove(5));
+            }
+        }
+
+        [Fact]
         public void Enumerate()
         {
             // Iterate in three ways
