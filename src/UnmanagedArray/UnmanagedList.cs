@@ -196,12 +196,12 @@ namespace UnmanageUtility
             if(items.IsEmpty) { return; }
 
             // Check whether items are part of self.
-            if(SelfContainMemory(ref MemoryMarshal.GetReference(items))) {
+            if(SpanContainsMemory(_array.AsSpan(), ref MemoryMarshal.GetReference(items))) {
 
                 // Ensure capacity without disposing old array
                 // because it contains added items.
                 if(EnsureCapacityWithoutDisposingOld(_length + items.Length, out var old)) {
-                    
+
                     // Dispose old array after copying.
                     using(old) {
                         items.CopyTo(_array.AsSpan(_length));
@@ -243,19 +243,96 @@ namespace UnmanageUtility
             if((uint)index > (uint)_length) { ThrowHelper.ArgumentOutOfRange(nameof(index)); }
 
             if(items.IsEmpty) { return; }
-            EnsureCapacity(_length + items.Length);
 
+            ref var itemsHead = ref MemoryMarshal.GetReference(items);
             // Check whether items are part of self.
-            if(SelfContainMemory(ref MemoryMarshal.GetReference(items))) {
-                throw new NotImplementedException();
-            }
+            if(SpanContainsMemory(_array.AsSpan(), ref itemsHead)) {
 
-            if(index < _length) {
-                var moveSpan = _array.AsSpan(index, _length - index);
-                var dest = _array.AsSpan(index + items.Length, moveSpan.Length);
-                moveSpan.CopyTo(dest);
+                // Ensure capacity without disposing old array
+                // because it contains added items.
+                if(EnsureCapacityWithoutCopy(_length + items.Length, out var old)) {
+                    // `items` are in `old`.
+                    using(old) {
+                        var size1 = index * sizeof(T);
+                        var size2 = (_length - index) * sizeof(T);
+                        Buffer.MemoryCopy((void*)old.Ptr,
+                                          (void*)_array.Ptr,
+                                          size1,
+                                          size1);
+                        Buffer.MemoryCopy((T*)old.Ptr + index,
+                                          (T*)_array.Ptr + items.Length,
+                                          size2,
+                                          size2);
+                        items.CopyTo(_array.AsSpan(index));
+                    }
+                }
+                else {
+                    Debug.Assert(old.Length == 0 && old.Ptr == default);
+                    // Capacity was not changed, so `items` are in `_array`
+
+                    //                             index (inserting point)
+                    // ------------------------------↓-------------------------------------------------
+                    // | _array[0] | _array[1] | ... | _array[index] | ... | _array[_array.Length - 1] |
+                    // |          firstHalf          |                   secondHalf                    |
+                    // ------------------------------+--------------------------------------------------
+                    //                               |
+                    // [case 1]                      |
+                    //             | <-- items --> | |
+                    // [case 2]                      |
+                    //                         | <----  items  ----> |
+                    // [case 3]                      |
+                    //                               | <----  items  ----> |
+
+                    var firstHalf = _array.AsSpan(0, index);
+                    var secondHalf = _array.AsSpan(index, _length - index);
+                    ref var itemsTail = ref Unsafe.AddByteOffset(ref MemoryMarshal.GetReference(items), new IntPtr(items.Length - 1));
+
+                    var isItemsHeadInFirst = SpanContainsMemory(firstHalf, ref itemsHead);
+                    var isItemsTailInFirst = SpanContainsMemory(firstHalf, ref itemsTail);
+                    if(isItemsHeadInFirst && isItemsTailInFirst) {
+                        // case 1
+                        secondHalf.CopyTo(_array.AsSpan(index + items.Length));
+                        items.CopyTo(_array.AsSpan(index, items.Length));
+                    }
+                    else if(!isItemsHeadInFirst && !isItemsTailInFirst) {
+                        // case 3
+                        var offsetFromInsertion = Unsafe.ByteOffset(ref MemoryMarshal.GetReference(secondHalf), ref itemsHead);
+                        var secondHalfAfterMove = _array.AsSpan(index + items.Length, secondHalf.Length);
+                        secondHalf.CopyTo(secondHalfAfterMove);
+                        ref var itemsHeadAfterMove = ref Unsafe.AddByteOffset(ref MemoryMarshal.GetReference(secondHalfAfterMove), offsetFromInsertion);
+
+                        // `items` are on unmanaged memory in this path,
+                        // so it is no problem to create Span<T> from void* pointer.
+                        // (in the runtime of slow span like net48 or netcoreapp2.0)
+                        var itemsAfterMove = new Span<T>(Unsafe.AsPointer(ref itemsHeadAfterMove), items.Length);
+                        itemsAfterMove.CopyTo(_array.AsSpan(index, items.Length));
+                    }
+                    else {
+                        // case 2
+                        Debug.Assert(isItemsHeadInFirst != isItemsTailInFirst);
+
+                        var itemsByteLenInFirst = Unsafe.ByteOffset(ref itemsHead, ref MemoryMarshal.GetReference(secondHalf));
+                        var secondHalfAfterMove = _array.AsSpan(index + items.Length, secondHalf.Length);
+                        secondHalf.CopyTo(secondHalfAfterMove);
+                        var itemsPartInFirst = MemoryMarshal.Cast<T, byte>(items)
+                                                .Slice(0, itemsByteLenInFirst.ToInt32());
+                        var insertionSpan = MemoryMarshal.Cast<T, byte>(_array.AsSpan(index, items.Length));
+                        itemsPartInFirst.CopyTo(insertionSpan);
+                        var itemsPartInSecondAfterMove = MemoryMarshal.Cast<T, byte>(secondHalfAfterMove)
+                                                            .Slice(0, items.Length * sizeof(T) - itemsByteLenInFirst.ToInt32());
+                        itemsPartInSecondAfterMove.CopyTo(insertionSpan.Slice(itemsByteLenInFirst.ToInt32()));
+                    }
+                }
             }
-            items.CopyTo(_array.AsSpan(index));
+            else {
+                EnsureCapacity(_length + items.Length);
+                if(index < _length) {
+                    var moveSpan = _array.AsSpan(index, _length - index);
+                    var dest = _array.AsSpan(index + items.Length, moveSpan.Length);
+                    moveSpan.CopyTo(dest);
+                }
+                items.CopyTo(_array.AsSpan(index));
+            }
             _length += items.Length;
         }
 
@@ -277,39 +354,42 @@ namespace UnmanageUtility
             else if(items is UnmanagedArray<T> ua) {
                 InsertRange(index, ua.AsSpan());
             }
-
-            // TODO: When items are ICollection<T>, which cases are faster;
-            //       Copy items to array buffer and re-copy it to inner memory, or insert each item by iterating.
-            //       I need benchmarking. (maybe I think former one is faster.)
-
-            //else if(items is ICollection<T> c) {
-            //    Debug.Assert(items != this);
-            //    var count = c.Count;
-            //    if(count > 0) {
-            //        EnsureCapacity(_length + count);
-            //        if(index < _length) {
-            //            var moveSpan = _array.AsSpan(index, _length - index);
-            //            var dest = _array.AsSpan(index + count, moveSpan.Length);
-            //            moveSpan.CopyTo(dest);
-            //        }
-            //        var buf = ArrayPool<T>.Shared.Rent(count);
-            //        try {
-            //            c.CopyTo(buf, 0);
-            //            buf.CopyTo(_array.AsSpan(index));
-            //        }
-            //        finally {
-            //            ArrayPool<T>.Shared.Return(buf);
-            //        }
-            //    }
+            // For future version in .NET 5
+            //else if(items is List<T> l) {
+            //    InsertRange(index, CollectionsMarshal.AsSpan(l));
             //}
+            else if(items is ICollection<T> c) {
+                // ICollection<T>.CopyTo needs T[] argument.
+                // Copy to a buffer array from ArrayPool<T>.Shared and re-copy to this._array.
+                // This is faster than each-item-iterating insertion.
 
+                // items must not be `this` because EnsureCapacity may free memory of items.
+                Debug.Assert(items != this);
+                var count = c.Count;
+                if(count > 0) {
+                    EnsureCapacity(_length + count);
+                    if(index < _length) {
+                        var moveSpan = _array.AsSpan(index, _length - index);
+                        var dest = _array.AsSpan(index + count, moveSpan.Length);
+                        moveSpan.CopyTo(dest);
+                    }
+                    var buf = ArrayPool<T>.Shared.Rent(count);
+                    try {
+                        c.CopyTo(buf, 0);
+                        buf.AsSpan(0, count).CopyTo(_array.AsSpan(index));
+                    }
+                    finally {
+                        ArrayPool<T>.Shared.Return(buf);
+                    }
+                    _length += count;
+                }
+            }
             else {
                 foreach(var item in items!) {
                     Insert(index++, item);
                 }
             }
         }
-
 
         // No inlining because this is uncommon path.
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -330,6 +410,19 @@ namespace UnmanageUtility
 
         private bool EnsureCapacityWithoutDisposingOld(int min, out RawArray old)
         {
+            if(EnsureCapacityWithoutCopy(min, out old)) {
+                if(_length > 0) {
+                    Buffer.MemoryCopy((void*)old.Ptr, (void*)_array.Ptr, _array.GetSizeInBytes(), _length * sizeof(T));
+                }
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+
+        private bool EnsureCapacityWithoutCopy(int min, out RawArray old)
+        {
             if(_array.Length < min) {
                 int newCapacity = _array.Length;
                 do {
@@ -340,9 +433,6 @@ namespace UnmanageUtility
                 } while(newCapacity < min);
 
                 var newArray = new RawArray(newCapacity);
-                if(_length > 0) {
-                    Buffer.MemoryCopy((void*)_array.Ptr, (void*)newArray.Ptr, newArray.GetSizeInBytes(), _length * sizeof(T));
-                }
                 old = _array;
                 _array = newArray;
                 return true;
@@ -354,22 +444,22 @@ namespace UnmanageUtility
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool SelfContainMemory(ref T target)
+        private bool SpanContainsMemory(Span<T> span, ref T target)
         {
             // [memory space]
             // ← small address                      big address →
-            //       ... | _array[0] | ... | _array[last] | ...
+            //       ... |  head  | ... |  tail   | ...
             //
-            //       ... | ////////////////////////////// | ...
-            //       ... |     memory range of _array     | ...
-            //       ... | ////////////////////////////// | ...
+            //       ... | ////////////////////// | ...
+            //       ... |      memory range      | ...
+            //       ... | ////////////////////// | ...
             //
-            //       ... |     !LessThan(ref target, ref _array[0])
-            // !GreaterThan(ref target, ref _array[last]) | ...
+            //       ... | !LessThan(ref target, ref head)
+            // !GreaterThan(ref target, ref tail) | ...
 
-            return _array.Length > 0 &&
-                   !Unsafe.IsAddressLessThan(ref target, ref _array[0]) &&
-                   !Unsafe.IsAddressGreaterThan(ref target, ref _array[_array.Length - 1]);
+            return span.Length > 0 &&
+                   !Unsafe.IsAddressLessThan(ref target, ref MemoryMarshal.GetReference(span)) &&
+                   !Unsafe.IsAddressGreaterThan(ref target, ref Unsafe.AddByteOffset(ref MemoryMarshal.GetReference(span), new IntPtr(span.Length - 1)));
         }
 
         /// <summary>

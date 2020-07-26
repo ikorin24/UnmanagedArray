@@ -366,11 +366,34 @@ namespace Test
                 }
             }
 
+            static void TestForSelf_AsIEnumerable(ReadOnlySpan<int> initialItems)
+            {
+                using(var list = new UnmanagedList<int>(initialItems)) {
+                    var len = 10;
+                    var count = initialItems.Length;
+                    for(int i = 0; i < len; i++) {
+                        list.AddRange(list.AsEnumerable());
+                        count += count;
+                        Assert.True(list.Count == count);
+                        Assert.True(list.Capacity >= list.Count);
+                    }
+                    for(int i = 0; i < list.Count; i++) {
+                        Assert.True(list[i] == (i % len));
+                    }
+                }
+            }
+
             // AddRange T[] as ReadOnlySpan<T>
             TestForSpan(items);
 
             // AddRange T[] as IEnumerable<T>
             TestForIEnumerable(items, items.Length);
+
+            // AddRange List<T> as IEnumerable<T>
+            TestForIEnumerable(items.ToList(), items.Length);
+
+            // AddRange ReadOnlyCollection<T> as IEnumerable<T>
+            TestForIEnumerable(items.ToList().AsReadOnly(), items.Length);
 
             // AddRange IEnumerable<T>
             TestForIEnumerable(itemsEnumerable, itemsCount);
@@ -378,8 +401,8 @@ namespace Test
             // AddRange self as ReadOnlySpan<T>
             TestForSelf_AsSpan(items.AsSpan());
 
-            //// AddRange self as IEnumerable<T>
-
+            // AddRange self as IEnumerable<T>
+            TestForSelf_AsIEnumerable(items.AsSpan());
         }
 
         [Fact]
