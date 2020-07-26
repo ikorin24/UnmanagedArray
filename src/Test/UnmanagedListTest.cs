@@ -727,6 +727,173 @@ namespace Test
             }
         }
 
+        [Fact]
+        public void InsertRange()
+        {
+            var initial = Enumerable.Range(10, 20).ToArray();
+
+            var itemsCount = 10;
+            var itemsEnumerable = Enumerable.Range(0, itemsCount);
+            var items = itemsEnumerable.ToArray();
+
+            {
+                using(var list = new UnmanagedList<int>(initial)) {
+                    var insert = 0;
+                    list.InsertRange(insert, items);
+                    Assert.True(list.Count == initial.Length + items.Length);
+                    Assert.True(list.AsSpan(0, insert).SequenceEqual(initial.AsSpan(0, insert)));
+                    Assert.True(list.AsSpan(insert, items.Length).SequenceEqual(items));
+                    Assert.True(list.AsSpan(insert + items.Length).SequenceEqual(initial.AsSpan(insert)));
+                }
+
+                using(var list = new UnmanagedList<int>(initial)) {
+                    var insert = 5;
+                    list.InsertRange(insert, items);
+                    Assert.True(list.Count == initial.Length + items.Length);
+                    Assert.True(list.AsSpan(0, insert).SequenceEqual(initial.AsSpan(0, insert)));
+                    Assert.True(list.AsSpan(insert, items.Length).SequenceEqual(items));
+                    Assert.True(list.AsSpan(insert + items.Length).SequenceEqual(initial.AsSpan(insert)));
+                }
+
+                using(var list = new UnmanagedList<int>(initial)) {
+                    var insert = initial.Length;
+                    list.InsertRange(insert, items);
+                    Assert.True(list.Count == initial.Length + items.Length);
+                    Assert.True(list.AsSpan(0, insert).SequenceEqual(initial.AsSpan(0, insert)));
+                    Assert.True(list.AsSpan(insert).SequenceEqual(items));
+                }
+            }
+
+            {
+                using(var list = new UnmanagedList<int>(initial)) {
+                    var insert = 0;
+                    list.InsertRange(insert, itemsEnumerable);
+                    Assert.True(list.Count == initial.Length + items.Length);
+                    Assert.True(list.AsSpan(0, insert).SequenceEqual(initial.AsSpan(0, insert)));
+                    Assert.True(list.AsSpan(insert, items.Length).SequenceEqual(items));
+                    Assert.True(list.AsSpan(insert + items.Length).SequenceEqual(initial.AsSpan(insert)));
+                }
+
+                using(var list = new UnmanagedList<int>(initial)) {
+                    var insert = 5;
+                    list.InsertRange(insert, itemsEnumerable);
+                    Assert.True(list.Count == initial.Length + items.Length);
+                    Assert.True(list.AsSpan(0, insert).SequenceEqual(initial.AsSpan(0, insert)));
+                    Assert.True(list.AsSpan(insert, items.Length).SequenceEqual(items));
+                    Assert.True(list.AsSpan(insert + items.Length).SequenceEqual(initial.AsSpan(insert)));
+                }
+
+                using(var list = new UnmanagedList<int>(initial)) {
+                    var insert = initial.Length;
+                    list.InsertRange(insert, itemsEnumerable);
+                    Assert.True(list.Count == initial.Length + items.Length);
+                    Assert.True(list.AsSpan(0, insert).SequenceEqual(initial.AsSpan(0, insert)));
+                    Assert.True(list.AsSpan(insert).SequenceEqual(items));
+                }
+            }
+
+            {
+                using(var list = new UnmanagedList<int>(initial)) {
+                    var insert = 0;
+                    list.InsertRange(insert, items.AsSpan());
+                    Assert.True(list.Count == initial.Length + items.Length);
+                    Assert.True(list.AsSpan(0, insert).SequenceEqual(initial.AsSpan(0, insert)));
+                    Assert.True(list.AsSpan(insert, items.Length).SequenceEqual(items));
+                    Assert.True(list.AsSpan(insert + items.Length).SequenceEqual(initial.AsSpan(insert)));
+                }
+
+                using(var list = new UnmanagedList<int>(initial)) {
+                    var insert = 5;
+                    list.InsertRange(insert, items.AsSpan());
+                    Assert.True(list.Count == initial.Length + items.Length);
+                    Assert.True(list.AsSpan(0, insert).SequenceEqual(initial.AsSpan(0, insert)));
+                    Assert.True(list.AsSpan(insert, items.Length).SequenceEqual(items));
+                    Assert.True(list.AsSpan(insert + items.Length).SequenceEqual(initial.AsSpan(insert)));
+                }
+
+                using(var list = new UnmanagedList<int>(initial)) {
+                    var insert = initial.Length;
+                    list.InsertRange(insert, items.AsSpan());
+                    Assert.True(list.Count == initial.Length + items.Length);
+                    Assert.True(list.AsSpan(0, insert).SequenceEqual(initial.AsSpan(0, insert)));
+                    Assert.True(list.AsSpan(insert).SequenceEqual(items));
+                }
+            }
+
+            // Test for inserting to self 
+            {
+                using(var list = new UnmanagedList<int>(initial)) {
+                    var c = list.Count;
+                    list.InsertRange(0, list.AsSpan());
+                    Assert.True(list.Count == initial.Length * 2);
+                    Assert.True(list.AsSpan(0, c).SequenceEqual(list.AsSpan(c, c)));
+                }
+
+                using(var list = new UnmanagedList<int>(initial)) {
+                    var copy = list.AsSpan(0, 10).ToArray();
+                    var insert = 5;
+                    list.InsertRange(insert, list.AsSpan(0, 10));
+                    Assert.True(list.Count == initial.Length + copy.Length);
+                    Assert.True(list.AsSpan(0, insert).SequenceEqual(initial.AsSpan(0, insert)));
+                    Assert.True(list.AsSpan(insert, copy.Length).SequenceEqual(copy));
+                    Assert.True(list.AsSpan(insert + copy.Length).SequenceEqual(initial.AsSpan(insert)));
+                }
+
+
+
+                using(var list = new UnmanagedList<int>(initial.Length * 2 + 10)) {
+                    list.AddRange(initial);
+
+                    var span = list.AsSpan(8, 10);
+                    var copy = span.ToArray();
+                    var insert = 5;
+                    list.InsertRange(insert, span);
+                    Assert.True(list.Count == initial.Length + copy.Length);
+
+                    Assert.True(list.AsSpan(0, insert).SequenceEqual(initial.AsSpan(0, insert)));
+                    Assert.True(list.AsSpan(insert, copy.Length).SequenceEqual(copy));
+                    Assert.True(list.AsSpan(insert + copy.Length).SequenceEqual(initial.AsSpan(insert)));
+                }
+
+                using(var list = new UnmanagedList<int>(initial.Length * 2 + 10)) {
+                    list.AddRange(initial);
+
+                    var span = list.AsSpan(3, 10);
+                    var copy = span.ToArray();
+                    var insert = 15;
+                    list.InsertRange(insert, span);
+                    Assert.True(list.Count == initial.Length + copy.Length);
+
+                    Assert.True(list.AsSpan(0, insert).SequenceEqual(initial.AsSpan(0, insert)));
+                    Assert.True(list.AsSpan(insert, copy.Length).SequenceEqual(copy));
+                    Assert.True(list.AsSpan(insert + copy.Length).SequenceEqual(initial.AsSpan(insert)));
+                }
+
+                using(var list = new UnmanagedList<int>(initial.Length * 2 + 10)) {
+                    list.AddRange(initial);
+
+                    var span = list.AsSpan(3, 10);
+                    var copy = span.ToArray();
+                    var insert = 6;
+                    list.InsertRange(insert, span);
+                    Assert.True(list.Count == initial.Length + copy.Length);
+
+                    Assert.True(list.AsSpan(0, insert).SequenceEqual(initial.AsSpan(0, insert)));
+                    Assert.True(list.AsSpan(insert, copy.Length).SequenceEqual(copy));
+                    Assert.True(list.AsSpan(insert + copy.Length).SequenceEqual(initial.AsSpan(insert)));
+                }
+
+                using(var list = new UnmanagedList<int>(initial.Length * 2 + 10)) {
+                    list.AddRange(initial);
+
+                    var span = list.AsSpan(3, 0);
+                    var copy = span.ToArray();
+                    list.InsertRange(6, span);
+                    Assert.True(list.AsSpan().SequenceEqual(initial));
+                }
+            }
+        }
+
         [StructLayout(LayoutKind.Sequential)]
         private struct TestData
         {
