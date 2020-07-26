@@ -260,7 +260,7 @@ namespace UnmanageUtility
                                           size1,
                                           size1);
                         Buffer.MemoryCopy((T*)old.Ptr + index,
-                                          (T*)_array.Ptr + items.Length,
+                                          (T*)_array.Ptr + index + items.Length,
                                           size2,
                                           size2);
                         items.CopyTo(_array.AsSpan(index));
@@ -285,7 +285,7 @@ namespace UnmanageUtility
 
                     var firstHalf = _array.AsSpan(0, index);
                     var secondHalf = _array.AsSpan(index, _length - index);
-                    ref var itemsTail = ref Unsafe.AddByteOffset(ref MemoryMarshal.GetReference(items), new IntPtr(items.Length - 1));
+                    ref var itemsTail = ref Unsafe.AddByteOffset(ref MemoryMarshal.GetReference(items), (IntPtr)((items.Length - 1) * sizeof(T)));
 
                     var isItemsHeadInFirst = SpanContainsMemory(firstHalf, ref itemsHead);
                     var isItemsTailInFirst = SpanContainsMemory(firstHalf, ref itemsTail);
@@ -459,7 +459,7 @@ namespace UnmanageUtility
 
             return span.Length > 0 &&
                    !Unsafe.IsAddressLessThan(ref target, ref MemoryMarshal.GetReference(span)) &&
-                   !Unsafe.IsAddressGreaterThan(ref target, ref Unsafe.AddByteOffset(ref MemoryMarshal.GetReference(span), new IntPtr(span.Length - 1)));
+                   !Unsafe.IsAddressGreaterThan(ref target, ref Unsafe.AddByteOffset(ref MemoryMarshal.GetReference(span), (IntPtr)((span.Length - 1) * sizeof(T))));
         }
 
         /// <summary>
