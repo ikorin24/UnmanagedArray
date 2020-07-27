@@ -113,6 +113,13 @@ namespace UnmanageUtility
             _length = items.Length;
         }
 
+        /// <summary>Create new <see cref="UnmanagedList{T}"/> instance initialized by specified <see cref="IEnumerable{T}"/>.</summary>
+        /// <param name="items">items copied to <see cref="UnmanagedList{T}"/></param>
+        public UnmanagedList(IEnumerable<T> items) : this(capacity: 0)
+        {
+            AddRange(items);
+        }
+
         /// <summary>Finalize <see cref="UnmanagedList{T}"/> instance</summary>
         ~UnmanagedList() => DisposePrivate();
 
@@ -770,6 +777,15 @@ namespace UnmanageUtility
         /// <returns>new <see cref="UnmanagedList{T}"/> initialized by <paramref name="source"/></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static UnmanagedList<T> ToUnmanagedList<T>(this Span<T> source) where T : unmanaged
+        {
+            return new UnmanagedList<T>(source);
+        }
+
+        /// <summary>Create new <see cref="UnmanagedList{T}"/> from <see cref="IEnumerable{T}"/>.</summary>
+        /// <typeparam name="T">type of elements</typeparam>
+        /// <param name="source">source <see cref="IEnumerable{T}"/> to initialize <see cref="UnmanagedList{T}"/></param>
+        /// <returns>new <see cref="UnmanagedList{T}"/> initialized by <paramref name="source"/></returns>
+        public static UnmanagedList<T> ToUnmanagedList<T>(this IEnumerable<T> source) where T : unmanaged
         {
             return new UnmanagedList<T>(source);
         }
