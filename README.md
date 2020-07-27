@@ -45,7 +45,7 @@ Install from Nuget by package manager console (in Visual Studio).
 https://www.nuget.org/packages/UnmanagedArray
 
 ```
-PM> Install-Package UnmanagedArray
+PM> Install-Package UnmanagedArray -Version 2.1.0-rc
 ```
 
 ## How to Use
@@ -91,6 +91,22 @@ using(var array2 = array.Where(x => x >= 5).ToUnmanagedArray()) {
 `UnmanagedArray<T>` has Finalizer and releases its unmanaged resources automatically when you forget releasing that.
 
 However, you have to release them explicitly ( by `using` scope or `Dispose()` ).
+
+### New Feature of ver 2.1.0-rc
+
+`UnmanagedList<T>` is available, which the way of use is similar to `List<T>`.
+
+```cs
+using(var list = new UnmanagedList<int>())
+{
+    list.Add(4);
+    list.Add(9);
+    foreach(var num in list)
+    {
+        Console.WriteLine(num);
+    }
+}
+```
 
 ## License and Credits
 
@@ -140,3 +156,9 @@ Apache License 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
 ### 2020/06/07 v2.0.1
 
 [![nuget](https://img.shields.io/badge/nuget-v2.0.1-FA77FF)](https://www.nuget.org/packages/UnmanagedArray/2.0.1)
+
+### 2020/07/27 v2.1.0-rc
+
+[![nuget](https://img.shields.io/badge/nuget-v2.1.0_rc-FA77FF)](https://www.nuget.org/packages/UnmanagedArray/2.1.0-rc)
+
+- Add `UnmanagedList<T>`.
