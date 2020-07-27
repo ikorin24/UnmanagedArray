@@ -92,6 +92,13 @@ namespace Test
                     Assert.True(list.Ptr == IntPtr.Zero);
                 }
 
+                // ctor of initializing list from IEnumerable<T>
+                using(var list = new UnmanagedList<T>(Enumerable.Repeat(default(T), 10))) {
+                    Assert.True(list.Count == 10);
+                    Assert.True(list.Capacity >= 0);
+                    Assert.True(list.Ptr != IntPtr.Zero);
+                }
+
                 Assert.Throws<ArgumentNullException>(() => new UnmanagedList<T>((T[])null!));
 
                 // Negative value capacity throws an exception.
@@ -891,6 +898,23 @@ namespace Test
                     list.InsertRange(6, span);
                     Assert.True(list.AsSpan().SequenceEqual(initial));
                 }
+            }
+        }
+
+        [Fact]
+        public void Linq()
+        {
+            var items = Enumerable.Range(0, 10).ToArray();
+
+            using(var list = Enumerable.Range(0, 10).ToUnmanagedList()) {
+                Assert.True(list.AsSpan().SequenceEqual(items));
+
+                Assert.True(
+                    list.Where(x => x % 2 == 0)
+                        .Select(x => x * 3)
+                        .SequenceEqual(
+                    items.Where(x => x % 2 == 0)
+                         .Select(x => x * 3)));
             }
         }
 
