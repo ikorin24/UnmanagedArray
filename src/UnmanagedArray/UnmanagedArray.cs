@@ -30,6 +30,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
+using System.ComponentModel;
 
 namespace UnmanageUtility
 {
@@ -51,7 +52,7 @@ namespace UnmanageUtility
         internal IntPtr _array;
 
         /// <summary>Get pointer address of this array.</summary>
-        public IntPtr Ptr { get { ThrowIfDisposed(); return _array; } }
+        public IntPtr Ptr => _array;
 
         /// <summary>Get <see cref="UnmanagedArray{T}"/> is disposed.</summary>
         public bool IsDisposed => _array == IntPtr.Zero;
@@ -232,6 +233,8 @@ namespace UnmanageUtility
         /// <summary>Get pointer address of specified index.</summary>
         /// <param name="index">index</param>
         /// <returns>pointer address</returns>
+        [Obsolete("Use instead 'Ptr + sizeof(T) * index', that is faster.")]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public unsafe IntPtr GetPtrIndexOf(int index)
         {
             ThrowIfDisposed();

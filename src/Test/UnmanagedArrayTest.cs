@@ -155,7 +155,7 @@ namespace Test
             Assert.True(array.IsDisposed);
             Assert.Throws<ObjectDisposedException>(() => array[0] = 34f);
             Assert.Throws<ObjectDisposedException>(() => array[3]);
-            Assert.Throws<ObjectDisposedException>(() => array.Ptr);
+            Assert.Equal(IntPtr.Zero, array.Ptr);
             //Assert.Throws<ObjectDisposedException>(() => ((ICollection<float>)array).Count);
             //Assert.Throws<ObjectDisposedException>(() => ((IReadOnlyCollection<float>)array).Count);
             //Assert.Throws<ObjectDisposedException>(() => ((ICollection)array).Count);
@@ -167,7 +167,9 @@ namespace Test
             Assert.Throws<ObjectDisposedException>(() => array.IndexOf(0f));
             Assert.Throws<ObjectDisposedException>(() => array.Contains(0f));
             Assert.Throws<ObjectDisposedException>(() => array.CopyTo(new float[10], 0));
+#pragma warning disable CS0618 // warning for obsolete
             Assert.Throws<ObjectDisposedException>(() => array.GetPtrIndexOf(0));
+#pragma warning restore CS0618 // warning for obsolete
             Assert.Throws<ObjectDisposedException>(() =>
             {
                 using var array2 = new UnmanagedArray<float>(array.Length);
