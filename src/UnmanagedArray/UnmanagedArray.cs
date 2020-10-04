@@ -60,23 +60,12 @@ namespace UnmanageUtility
         /// <summary>Get the specific item of specific index.</summary>
         /// <param name="i">index</param>
         /// <returns>The item of specific index</returns>
-        public unsafe T this[int i]
+        public T this[int i]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get
-            {
-                if((uint)i >= (uint)_length) { throw new IndexOutOfRangeException(); }
-                ThrowIfDisposed();
-                return ((T*)_array)[i];
-            }
-
+            get => GetReference(i);
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            set
-            {
-                if((uint)i >= (uint)_length) { throw new IndexOutOfRangeException(); }
-                ThrowIfDisposed();
-                ((T*)_array)[i] = value;
-            }
+            set => GetReference(i) = value;
         }
 
         /// <summary>Get length of this array</summary>
@@ -115,9 +104,13 @@ namespace UnmanageUtility
         /// <summary>Create new <see cref="UnmanagedArray{T}"/> filled by specified element.</summary>
         /// <param name="length">length of array</param>
         /// <param name="fill">element that fills array</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe UnmanagedArray(int length, T fill)
         {
-            if(length < 0) { throw new ArgumentOutOfRangeException(); }
+            if(length < 0) {
+                ThrowOutOfRange();
+                static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException();
+            }
             var bytes = sizeof(T) * length;
             if(bytes == 0) { return; }
             _array = Marshal.AllocHGlobal(bytes);
@@ -129,9 +122,13 @@ namespace UnmanageUtility
         {
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal unsafe static UnmanagedArray<T> CreateWithoutZeroFill(int length)
         {
-            if(length < 0) { throw new ArgumentOutOfRangeException(nameof(length)); }
+            if(length < 0) {
+                ThrowOutOfRange();
+                static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(length));
+            }
             var umarray = new UnmanagedArray<T>();
             var bytes = length * sizeof(T);
             if(bytes > 0) {
@@ -154,6 +151,31 @@ namespace UnmanageUtility
 
         /// <summary>Finalizer of <see cref="UnmanagedArray{T}"/></summary>
         ~UnmanagedArray() => Dispose(false);
+
+        /// <summary>Get reference to head item (Returns ref to null if empty)</summary>
+        /// <returns>reference to head item</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe ref T GetReference()
+        {
+#if DEBUG
+            if(_length == 0) {
+                Debug.Assert(_array == IntPtr.Zero);
+            }
+#endif
+            return ref Unsafe.AsRef<T>((T*)_array);
+        }
+
+        /// <summary>Get reference to head item (Returns ref to null if empty)</summary>
+        /// <returns>reference to head item</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe ref T GetReference(int index)
+        {
+            if((uint)index >= (uint)_length) {
+                ThrowOutOfRange();
+                static void ThrowOutOfRange() => throw new IndexOutOfRangeException();
+            }
+            return ref Unsafe.Add(ref GetReference(), index);
+        }
 
         /// <summary>Get enumerator instance.</summary>
         /// <returns></returns>
@@ -235,10 +257,14 @@ namespace UnmanageUtility
         /// <returns>pointer address</returns>
         [Obsolete("Use instead 'Ptr + sizeof(T) * index', that is faster.")]
         [EditorBrowsable(EditorBrowsableState.Never)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe IntPtr GetPtrIndexOf(int index)
         {
             ThrowIfDisposed();
-            if((uint)index >= (uint)_length) { throw new IndexOutOfRangeException(); }
+            if((uint)index >= (uint)_length) {
+                ThrowOutOfRange();
+                static void ThrowOutOfRange() => throw new IndexOutOfRangeException();
+            }
             return new IntPtr((T*)_array + index);
         }
 
@@ -285,10 +311,11 @@ namespace UnmanageUtility
         /// <returns><see cref="Span{T}"/></returns>
         public unsafe Span<T> AsSpan()
         {
+#if DEBUG
             if(_length == 0) {
-                return Span<T>.Empty;
+                Debug.Assert(_array == IntPtr.Zero);
             }
-            ThrowIfDisposed();
+#endif
             return new Span<T>((T*)_array, _length);
         }
 
@@ -309,6 +336,7 @@ namespace UnmanageUtility
             return array;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static unsafe UnmanagedArray<T> DirectCreateWithoutCopy(T* ptr, int length)
         {
             // Be Careful !!!! This method is very unsafe !!
@@ -338,6 +366,7 @@ namespace UnmanageUtility
             Marshal.FreeHGlobal(_array);
             Debug.Assert(sizeof(T) * _length > 0);
             _array = IntPtr.Zero;
+            _length = 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

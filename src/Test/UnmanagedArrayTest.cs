@@ -153,14 +153,20 @@ namespace Test
             var array = new UnmanagedArray<float>(10);
             array.Dispose();
             Assert.True(array.IsDisposed);
-            Assert.Throws<ObjectDisposedException>(() => array[0] = 34f);
-            Assert.Throws<ObjectDisposedException>(() => array[3]);
             Assert.Equal(IntPtr.Zero, array.Ptr);
+            Assert.Equal(0, array.Length);
+            Assert.True(array.AsSpan().IsEmpty);
+            Assert.Throws<IndexOutOfRangeException>(() => array[0] = 34f);
+            Assert.Throws<IndexOutOfRangeException>(() => array[3]);
+            Assert.Throws<NullReferenceException>(() => array.GetReference() = 3f);
+            Assert.Throws<NullReferenceException>(() => array.GetReference());
+            Assert.Throws<IndexOutOfRangeException>(() => array.GetReference(2) = 3f);
+            Assert.Throws<IndexOutOfRangeException>(() => array.GetReference(5));
             //Assert.Throws<ObjectDisposedException>(() => ((ICollection<float>)array).Count);
             //Assert.Throws<ObjectDisposedException>(() => ((IReadOnlyCollection<float>)array).Count);
             //Assert.Throws<ObjectDisposedException>(() => ((ICollection)array).Count);
-            Assert.Throws<ObjectDisposedException>(() => ((IList)array)[0]);
-            Assert.Throws<ObjectDisposedException>(() => ((IList)array)[0] = 0f);
+            Assert.Throws<IndexOutOfRangeException>(() => ((IList)array)[0]);
+            Assert.Throws<IndexOutOfRangeException>(() => ((IList)array)[0] = 0f);
             Assert.Throws<ObjectDisposedException>(() => array.GetEnumerator());
             Assert.Throws<ObjectDisposedException>(() => ((IEnumerable)array).GetEnumerator());
             Assert.Throws<ObjectDisposedException>(() => ((IEnumerable<float>)array).GetEnumerator());
@@ -172,7 +178,7 @@ namespace Test
 #pragma warning restore CS0618 // warning for obsolete
             Assert.Throws<ObjectDisposedException>(() =>
             {
-                using var array2 = new UnmanagedArray<float>(array.Length);
+                using var array2 = new UnmanagedArray<float>(10);
                 array.CopyFrom(array2.Ptr, 0, array2.Length);
             });
             Assert.Throws<ObjectDisposedException>(() => array.CopyFrom(new UnmanagedArray<float>(10)));
@@ -181,10 +187,32 @@ namespace Test
                 var span = new Span<float>();
                 array.CopyFrom(span, 0);
             });
-            Assert.Throws<ObjectDisposedException>(() => array.AsSpan());
 
 
             array.Dispose();        // No exception although already disposed
+        }
+
+        [Fact]
+        public void GetReference()
+        {
+            using(var array = new UnmanagedArray<int>(10)) {
+                array[0] = 31;
+                array[8] = 40;
+                ref var head = ref array.GetReference();
+                Assert.Equal(31, head);
+                head = 20;
+                Assert.Equal(20, head);
+
+                ref var item = ref array.GetReference(8);
+                Assert.Equal(40, item);
+                item = 600;
+                Assert.Equal(600, item);
+
+                Assert.Throws<IndexOutOfRangeException>(() => array.GetReference(30));
+                Assert.Throws<IndexOutOfRangeException>(() => array.GetReference(50) = 100);
+                Assert.Throws<IndexOutOfRangeException>(() => array.GetReference(-1));
+                Assert.Throws<IndexOutOfRangeException>(() => array.GetReference(-3) = 100);
+            }
         }
 
         [Fact]
