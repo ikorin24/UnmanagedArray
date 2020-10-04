@@ -43,6 +43,10 @@ namespace UnmanageUtility
     public sealed class UnmanagedArray<T> : IList<T>, IReadOnlyList<T>, IList, IReadOnlyCollection<T>, IDisposable
         where T : unmanaged
     {
+        [ThreadStatic]
+        internal static UnmanagedList<T>? _helperList;
+
+
         internal int _length;
         internal IntPtr _array;
 
@@ -302,6 +306,17 @@ namespace UnmanageUtility
             return array;
         }
 
+        internal static unsafe UnmanagedArray<T> DirectCreateWithoutCopy(T* ptr, int length)
+        {
+            // Be Careful !!!! This method is very unsafe !!
+            // 'ptr' must be pointer to unmanaged heap memory.
+
+            var array = new UnmanagedArray<T>();
+            array._array = (IntPtr)ptr;
+            array._length = length;
+            return array;
+        }
+
         /// <summary>
         /// Dispose this instance and release unmanaged memory.<para/>
         /// If already disposed, do nothing.<para/>
@@ -451,37 +466,15 @@ namespace UnmanageUtility
                 managedArray.AsSpan().CopyTo(array.AsSpan());
                 return array;
             }
-            else if(source is ICollection<T> collection) {
-                var array = new UnmanagedArray<T>(collection.Count);
-                int i = 0;
-                foreach(var item in collection) {
-                    ((T*)array._array)[i++] = item;
-                }
-                return array;
-            }
             else {
-                const int initialLen = 4;
-                var array = new UnmanagedArray<T>(initialLen);
-                int i = 0;
-                foreach(var item in source) {
-                    if(i >= array.Length) {
-                        // Expand length of the array.
-                        var newArray = UnmanagedArray<T>.CreateWithoutZeroFill(array.Length * 2);
-                        array.AsSpan().CopyTo(newArray.AsSpan());
-                        array.Dispose();
-                        array = newArray;
-                    }
-                    ((T*)array._array)[i] = item;
-                    i++;
-                }
-                if(array.Length != i) {
-                    // Shrink length of the array.
-                    var newArray = UnmanagedArray<T>.CreateWithoutZeroFill(i);
-                    array.AsSpan().Slice(0, i).CopyTo(newArray.AsSpan());
-                    array.Dispose();
-                    array = newArray;
-                }
-                return array;
+                var helper = (UnmanagedArray<T>._helperList ??= new UnmanagedList<T>());
+                helper.AddRange(source);
+                helper.TransferInnerMemoryOwnership(out var ptr, out _, out var length);
+
+                // Capacity of allocated memory may be larger than length to use,
+                // but this occurs no problem.
+
+                return UnmanagedArray<T>.DirectCreateWithoutCopy((T*)ptr, length);
             }
         }
 

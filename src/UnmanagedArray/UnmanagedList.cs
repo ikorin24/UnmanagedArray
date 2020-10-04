@@ -551,6 +551,15 @@ namespace UnmanageUtility
             _length = 0;
         }
 
+        internal void TransferInnerMemoryOwnership(out IntPtr ptr, out int capacity, out int length)
+        {
+            ptr = _array.Ptr;
+            capacity = _array.Length;
+            length = _length;
+            _array = default;
+            _length = 0;
+        }
+
         /// <summary>Get whether specified item is in the list.</summary>
         /// <param name="item">target item to check</param>
         /// <returns>true if contains, false if not contain</returns>
