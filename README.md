@@ -1,7 +1,7 @@
 # Unmanaged Array
 
 [![GitHub license](https://img.shields.io/github/license/ikorin24/UnmanagedArray?color=FA77FF)](https://github.com/ikorin24/UnmanagedArray/blob/master/LICENSE)
-[![nuget](https://img.shields.io/badge/nuget-v2.1.0_rc-FA77FF)](https://www.nuget.org/packages/UnmanagedArray)
+[![nuget](https://img.shields.io/badge/nuget-v2.1.0-FA77FF)](https://www.nuget.org/packages/UnmanagedArray)
 
 An Effective tool for unmanaged array in C#.
 
@@ -45,7 +45,7 @@ Install from Nuget by package manager console (in Visual Studio).
 https://www.nuget.org/packages/UnmanagedArray
 
 ```
-PM> Install-Package UnmanagedArray -Version 2.1.0-rc
+PM> Install-Package UnmanagedArray
 ```
 
 ## How to Use
@@ -92,7 +92,7 @@ using(var array2 = array.Where(x => x >= 5).ToUnmanagedArray()) {
 
 However, you have to release them explicitly ( by `using` scope or `Dispose()` ).
 
-### New Feature of ver 2.1.0-rc
+### New Feature of ver 2.1.0
 
 `UnmanagedList<T>` is available, which the way of use is similar to `List<T>`.
 
@@ -162,3 +162,10 @@ Apache License 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
 [![nuget](https://img.shields.io/badge/nuget-v2.1.0_rc-FA77FF)](https://www.nuget.org/packages/UnmanagedArray/2.1.0-rc)
 
 - Add `UnmanagedList<T>`.
+
+### 2020/10/05 v2.1.0
+
+[![nuget](https://img.shields.io/badge/nuget-v2.1.0-FA77FF)](https://www.nuget.org/packages/UnmanagedArray/2.1.0)
+
+- Performance improvement.
+- Add some methods.
