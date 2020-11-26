@@ -97,6 +97,26 @@ namespace Test
         }
 
         [Fact]
+        public void Empty()
+        {
+            var array = UnmanagedArray<int>.Empty;
+            Assert.Equal(0, array.Length);
+            Assert.True(array.IsDisposed);          // empty array is disposed already
+            Assert.Equal(IntPtr.Zero, array.Ptr);   // pointer of empty array is always null.
+
+            var array2 = UnmanagedArray<int>.Empty;
+            Assert.True(ReferenceEquals(array, array2));    // empty arrays are same instance.
+            
+            // Nothing happens if dispose empty array
+            array.Dispose();
+            array.Dispose();
+
+            Assert.Equal(0, array.Length);
+            Assert.True(array.IsDisposed);
+            Assert.Equal(IntPtr.Zero, array.Ptr);
+        }
+
+        [Fact]
         public void Indexer()
         {
             using(var array = new UnmanagedArray<int>(100)) {

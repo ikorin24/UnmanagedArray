@@ -44,12 +44,17 @@ namespace UnmanageUtility
     public sealed class UnmanagedArray<T> : IList<T>, IReadOnlyList<T>, IList, IReadOnlyCollection<T>, IDisposable
         where T : unmanaged
     {
+        private static UnmanagedArray<T> _empty = new UnmanagedArray<T>(0);
+
         [ThreadStatic]
         internal static UnmanagedList<T>? _helperList;
 
 
         internal int _length;
         internal IntPtr _array;
+
+        /// <summary>Get empty array</summary>
+        public static UnmanagedArray<T> Empty => _empty;
 
         /// <summary>Get pointer address of this array.</summary>
         public IntPtr Ptr => _array;

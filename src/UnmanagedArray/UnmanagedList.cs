@@ -52,8 +52,38 @@ namespace UnmanageUtility
         /// <summary>Get count of elements in the list.</summary>
         public int Count => _length;
 
-        /// <summary>Get capacity of current inner array.</summary>
-        public int Capacity => _array.Length;
+        /// <summary>Get or set capacity of current inner array.</summary>
+        public int Capacity
+        {
+            get => _array.Length;
+            set
+            {
+                if(value < _length) {
+                    throw new ArgumentOutOfRangeException(nameof(value));
+                }
+                if(value != _array.Length) {
+                    if(value > 0) {
+                        RawArray newArray = default;
+                        try {
+                            newArray = new RawArray(value);
+                            if(_length > 0) {
+                                Buffer.MemoryCopy((void*)_array.Ptr, (void*)newArray.Ptr, newArray.Length * sizeof(T), _length * sizeof(T));
+                            }
+                        }
+                        catch {
+                            newArray.Dispose();
+                            throw;
+                        }
+                        _array.Dispose();
+                        _array = newArray;
+                    }
+                    else {
+                        _array.Dispose();
+                        _array = default;
+                    }
+                }
+            }
+        }
 
         /// <summary>Get pointer of innner array. (Returns <see cref="IntPtr.Zero"/> if <see cref="Count"/> == 0).</summary>
         public IntPtr Ptr

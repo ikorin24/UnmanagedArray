@@ -150,6 +150,48 @@ namespace Test
         }
 
         [Fact]
+        public void Capacity()
+        {
+            using(var list = new UnmanagedList<int>(10)) {
+                Assert.Equal(10, list.Capacity);
+                Assert.True(list.Count == 0);
+
+                list.Capacity = 20;
+                Assert.Equal(20, list.Capacity);
+                Assert.True(list.Count == 0);
+
+                list.Capacity = 0;
+                Assert.Equal(0, list.Capacity);
+                Assert.True(list.Count == 0);
+            }
+
+            using(var list = new UnmanagedList<int>(Enumerable.Range(0, 10))) {
+                Assert.Equal(10, list.Count);
+                Assert.True(list.Capacity >= 10);
+                for(int i = 0; i < 10; i++) {
+                    Assert.Equal(i, list[i]);
+                }
+
+                list.Capacity = 20;
+
+                Assert.Equal(10, list.Count);
+                Assert.Equal(20, list.Capacity);
+                for(int i = 0; i < 10; i++) {
+                    Assert.Equal(i, list[i]);
+                }
+            }
+
+            using(var list = new UnmanagedList<int>(10)) {
+                Assert.True(list.Count == 0);
+                Assert.Equal(10, list.Capacity);
+
+                list.Capacity = 0;
+                Assert.True(list.Count == 0);
+                Assert.True(list.Capacity == 0);
+            }
+        }
+
+        [Fact]
         public void Indexer()
         {
             using(var list = new UnmanagedList<int>()) {

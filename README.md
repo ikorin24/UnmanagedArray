@@ -1,7 +1,7 @@
 # Unmanaged Array
 
 [![GitHub license](https://img.shields.io/github/license/ikorin24/UnmanagedArray?color=FA77FF)](https://github.com/ikorin24/UnmanagedArray/blob/master/LICENSE)
-[![nuget](https://img.shields.io/badge/nuget-v2.1.0-FA77FF)](https://www.nuget.org/packages/UnmanagedArray)
+[![nuget](https://img.shields.io/badge/nuget-v2.1.1-FA77FF)](https://www.nuget.org/packages/UnmanagedArray)
 
 An Effective tool for unmanaged array in C#.
 
@@ -169,3 +169,10 @@ Apache License 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
 
 - Performance improvement.
 - Add some methods.
+
+### 2020/11/26 v2.1.1
+
+[![nuget](https://img.shields.io/badge/nuget-v2.1.0-FA77FF)](https://www.nuget.org/packages/UnmanagedArray/2.1.0)
+
+- Add `UnmanagedArray<T>.Empty` static property.
+- Add propserty setter of `UnmanagedList<T>.Capacity`.
