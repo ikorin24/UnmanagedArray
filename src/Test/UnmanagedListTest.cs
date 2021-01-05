@@ -521,9 +521,17 @@ namespace Test
                 Assert.True(list.AsSpan(20, 0).IsEmpty);
             }
 
+            using(var list = new UnmanagedList<int>(Enumerable.Range(0, 10).ToArray().AsSpan())) {
+                Assert.True(list.Count == 10);
+                var span = list.AsSpan();
+                Assert.True(list.AsSpan(10).IsEmpty);
+                Assert.True(list.AsSpan(10, 0).IsEmpty);
+                Assert.True(list.AsSpan(0).SequenceEqual(span));
+                Assert.True(list.AsSpan(0, 10).SequenceEqual(span));
+            }
+
             using(var list = new UnmanagedList<int>(Enumerable.Range(0, 100).ToArray().AsSpan())) {
                 Assert.Throws<ArgumentOutOfRangeException>(() => list.AsSpan(-1));
-                Assert.Throws<ArgumentOutOfRangeException>(() => list.AsSpan(100));
                 Assert.Throws<ArgumentOutOfRangeException>(() => list.AsSpan(20, 81));
                 Assert.Throws<ArgumentOutOfRangeException>(() => list.AsSpan(20, -1));
                 Assert.Throws<ArgumentOutOfRangeException>(() => list.AsSpan(-1, 100));

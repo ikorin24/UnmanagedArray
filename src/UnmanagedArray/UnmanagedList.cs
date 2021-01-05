@@ -523,7 +523,7 @@ namespace UnmanageUtility
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Span<T> AsSpan(int start)
         {
-            if((uint)start >= (uint)_length) { ThrowHelper.ArgumentOutOfRange(nameof(start)); }
+            if((uint)start > (uint)_length) { ThrowHelper.ArgumentOutOfRange(nameof(start)); }
             return _array.AsSpan(start, _length - start);
         }
 
@@ -534,7 +534,7 @@ namespace UnmanageUtility
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Span<T> AsSpan(int start, int length)
         {
-            if((uint)start >= (uint)_length) { ThrowHelper.ArgumentOutOfRange(nameof(start)); }
+            if((uint)start > (uint)_length) { ThrowHelper.ArgumentOutOfRange(nameof(start)); }
             if((uint)length > (uint)(_length - start)) { ThrowHelper.ArgumentOutOfRange(nameof(length)); }
 
             return _array.AsSpan(start, length);
