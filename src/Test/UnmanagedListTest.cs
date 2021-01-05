@@ -733,7 +733,7 @@ namespace Test
                 {
                     var i = 0;
                     foreach(var item in (System.Collections.IEnumerable)list) {
-                        Assert.Equal(i, (int)item);
+                        Assert.Equal(i, (int)item!);
                         i++;
                     }
                 }

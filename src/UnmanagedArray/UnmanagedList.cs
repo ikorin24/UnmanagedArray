@@ -102,7 +102,9 @@ namespace UnmanageUtility
 
         object ICollection.SyncRoot => this;
 
+#pragma warning disable CS8769
         object IList.this[int index] { get => this[index]; set => this[index] = (T)value; }
+#pragma warning restore CS8769
 
         /// <summary>Create new <see cref="UnmanagedList{T}"/> instance with default capacity.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -636,6 +638,7 @@ namespace UnmanageUtility
 
         IEnumerator IEnumerable.GetEnumerator() => new EnumeratorClass(this);
 
+#pragma warning disable CS8769
         int IList.Add(object value)
         {
             Add((T)value);
@@ -651,7 +654,7 @@ namespace UnmanageUtility
         void IList.Remove(object value) => Remove((T)value);
 
         void ICollection.CopyTo(Array array, int index) => CopyTo((T[])array, index);
-
+#pragma warning restore CS8769
 
 
         /// <summary>Enumerator struct of <see cref="UnmanagedList{T}"/></summary>

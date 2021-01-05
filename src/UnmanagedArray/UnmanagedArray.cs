@@ -100,7 +100,9 @@ namespace UnmanageUtility
 
         bool ICollection.IsSynchronized => false;
 
+#pragma warning disable CS8769
         object IList.this[int index] { get => this[index]; set => this[index] = (T)value; }
+#pragma warning restore CS8769
 
         /// <summary>UnmanagedArray Constructor</summary>
         /// <param name="length">Length of array</param>
@@ -422,6 +424,7 @@ namespace UnmanageUtility
             if(IsDisposed) { throw new ObjectDisposedException(nameof(UnmanagedArray<T>), "Memory of array is already free."); }
         }
 
+#pragma warning disable CS8769
         int IList.Add(object value) => throw new NotSupportedException();
         void IList.Clear() => throw new NotSupportedException();
         void IList.Insert(int index, object value) => throw new NotSupportedException();
@@ -430,6 +433,7 @@ namespace UnmanageUtility
         bool IList.Contains(object value) => (value is T v) ? Contains(v) : false;
         int IList.IndexOf(object value) => (value is T v) ? IndexOf(v) : -1;
         void ICollection.CopyTo(Array array, int index) => CopyTo((T[])array, index);
+#pragma warning restore CS8769
 
         /// <summary>Enumerator of <see cref="UnmanagedArray{T}"/></summary>
         public unsafe struct Enumerator : IEnumerator<T>, IEnumerator
