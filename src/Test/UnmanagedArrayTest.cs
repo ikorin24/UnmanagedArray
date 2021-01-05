@@ -208,6 +208,12 @@ namespace Test
                 array.CopyFrom(span, 0);
             });
 
+            Assert.Throws<ArgumentOutOfRangeException>(() => array.AsSpan(-1));
+            Assert.Throws<ArgumentOutOfRangeException>(() => array.AsSpan(-1, 0));
+            Assert.Throws<ArgumentOutOfRangeException>(() => array.AsSpan(0, -1));
+            Assert.Throws<ArgumentOutOfRangeException>(() => array.AsSpan(0, array.Length + 1));
+            Assert.Throws<ArgumentOutOfRangeException>(() => array.AsSpan(1, array.Length));
+
 
             array.Dispose();        // No exception although already disposed
         }
@@ -377,6 +383,26 @@ namespace Test
                     span[i] = 30;
                 }
                 Assert.True(array.All(x => x == 30));
+            }
+
+            using(var array = Enumerable.Range(0, 100).ToUnmanagedArray()) {
+                var ans = Enumerable.Range(0, 100).ToArray();
+                Assert.True(array.AsSpan().SequenceEqual(ans));
+                Assert.True(array.AsSpan(0).SequenceEqual(ans.AsSpan(0)));
+                Assert.True(array.AsSpan(100).SequenceEqual(ans.AsSpan(100)));
+                Assert.True(array.AsSpan(0, 100).SequenceEqual(ans.AsSpan(0, 100)));
+                Assert.True(array.AsSpan(0, 0).SequenceEqual(ans.AsSpan(0, 0)));
+                Assert.True(array.AsSpan(0, 0).SequenceEqual(ans.AsSpan(0, 0)));
+                Assert.True(array.AsSpan(10, 20).SequenceEqual(ans.AsSpan(10, 20)));
+
+
+                Assert.True(array.AsSpan().SequenceEqual(array.AsSpan(0, array.Length)));
+            }
+
+            using(var array = UnmanagedArray<int>.Empty) {
+                Assert.True(array.AsSpan().IsEmpty);
+                Assert.True(array.AsSpan(0).IsEmpty);
+                Assert.True(array.AsSpan(0, 0).IsEmpty);
             }
         }
 

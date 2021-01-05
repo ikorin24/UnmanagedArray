@@ -314,6 +314,7 @@ namespace UnmanageUtility
 
         /// <summary>Return <see cref="Span{T}"/> of this <see cref="UnmanagedArray{T}"/>.</summary>
         /// <returns><see cref="Span{T}"/></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe Span<T> AsSpan()
         {
 #if DEBUG
@@ -322,6 +323,47 @@ namespace UnmanageUtility
             }
 #endif
             return new Span<T>((T*)_array, _length);
+        }
+
+        /// <summary>Return <see cref="Span{T}"/> starts with specified index.</summary>
+        /// <param name="start">start index</param>
+        /// <returns><see cref="Span{T}"/></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe Span<T> AsSpan(int start)
+        {
+#if DEBUG
+            if(_length == 0) {
+                Debug.Assert(_array == IntPtr.Zero);
+            }
+#endif
+            if((uint)start > (uint)_length) {
+                ThrowOutOfRange();
+                static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(start));
+            }
+            return new Span<T>((T*)_array + start, _length - start);
+        }
+
+        /// <summary>Return <see cref="Span{T}"/> of specified length starts with specified index.</summary>
+        /// <param name="start">start index</param>
+        /// <param name="length">length of span</param>
+        /// <returns><see cref="Span{T}"/></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe Span<T> AsSpan(int start, int length)
+        {
+#if DEBUG
+            if(_length == 0) {
+                Debug.Assert(_array == IntPtr.Zero);
+            }
+#endif
+            if((uint)start > (uint)_length) {
+                ThrowOutOfRange();
+                static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(start));
+            }
+            if((uint)length > (uint)_length - (uint)start) {
+                ThrowOutOfRange();
+                static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(length));
+            }
+            return new Span<T>((T*)_array + start, length);
         }
 
         /// <summary>Create new <see cref="UnmanagedArray{T}"/> whose values are initialized by memory layout of specified structure.</summary>
