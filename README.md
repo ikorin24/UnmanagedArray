@@ -1,7 +1,7 @@
 # Unmanaged Array
 
 [![GitHub license](https://img.shields.io/github/license/ikorin24/UnmanagedArray?color=FA77FF)](https://github.com/ikorin24/UnmanagedArray/blob/master/LICENSE)
-[![nuget](https://img.shields.io/badge/nuget-v2.1.1-FA77FF)](https://www.nuget.org/packages/UnmanagedArray)
+[![nuget](https://img.shields.io/badge/nuget-v2.1.2-FA77FF)](https://www.nuget.org/packages/UnmanagedArray)
 
 An Effective tool for unmanaged array in C#.
 
@@ -23,19 +23,12 @@ The only type of item `UnmanagedArray<T>` supports is `unmanaged` type.
 
 (because reference types are allocated in managed memory on C#.)
 
-## Requirements and Dependencies (On Building)
-
-- .NET Standard 2.0
-- C# 8.0
-
 ## Building from Source
 
 ```sh
 $ git clone https://github.com/ikorin24/UnmanagedArray.git
 $ cd UnmanagedArray
 $ dotnet build src/UnmanagedArray/UnmanagedArray.csproj -c Release
-
-# ----> src/UnmanagedArray/bin/Release/netstandard2.0/UnmanagedArray.dll
 ```
 
 ## Installation
@@ -172,7 +165,15 @@ Apache License 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
 
 ### 2020/11/26 v2.1.1
 
-[![nuget](https://img.shields.io/badge/nuget-v2.1.0-FA77FF)](https://www.nuget.org/packages/UnmanagedArray/2.1.0)
+[![nuget](https://img.shields.io/badge/nuget-v2.1.1-FA77FF)](https://www.nuget.org/packages/UnmanagedArray/2.1.1)
 
 - Add `UnmanagedArray<T>.Empty` static property.
-- Add propserty setter of `UnmanagedList<T>.Capacity`.
+- Add property setter of `UnmanagedList<T>.Capacity`.
+
+### 2021/01/05 v2.1.2
+
+[![nuget](https://img.shields.io/badge/nuget-v2.1.2-FA77FF)](https://www.nuget.org/packages/UnmanagedArray/2.1.2)
+
+- Add `UnmanagedArray<T>.AsSpan` overload methods.
+- Package for multi target frameworks. (net48, netcoreapp3.1, net5.0, netstandard2.0, netstandard2.1)
+- Fix small bugs.
