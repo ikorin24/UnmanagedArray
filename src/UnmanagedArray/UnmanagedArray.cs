@@ -24,6 +24,11 @@ SOFTWARE.
  */
 
 #nullable enable
+
+#if NET5_0 || NETCOREAPP3_1
+#define FAST_SPAN
+#endif
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -324,7 +329,11 @@ namespace UnmanageUtility
                 Debug.Assert(_array == IntPtr.Zero);
             }
 #endif
+#if FAST_SPAN
+            return MemoryMarshal.CreateSpan(ref Unsafe.AsRef<T>((T*)_array), _length);
+#else
             return new Span<T>((T*)_array, _length);
+#endif
         }
 
         /// <summary>Return <see cref="Span{T}"/> starts with specified index.</summary>
@@ -342,7 +351,11 @@ namespace UnmanageUtility
                 ThrowOutOfRange();
                 static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(start));
             }
+#if FAST_SPAN
+            return MemoryMarshal.CreateSpan(ref Unsafe.AsRef<T>((T*)_array + start), _length - start);
+#else
             return new Span<T>((T*)_array + start, _length - start);
+#endif
         }
 
         /// <summary>Return <see cref="Span{T}"/> of specified length starts with specified index.</summary>
@@ -365,7 +378,11 @@ namespace UnmanageUtility
                 ThrowOutOfRange();
                 static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(length));
             }
+#if FAST_SPAN
+            return MemoryMarshal.CreateSpan(ref Unsafe.AsRef<T>((T*)_array + start), length);
+#else
             return new Span<T>((T*)_array + start, length);
+#endif
         }
 
         /// <summary>Create new <see cref="UnmanagedArray{T}"/> whose values are initialized by memory layout of specified structure.</summary>

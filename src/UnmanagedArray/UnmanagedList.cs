@@ -24,6 +24,11 @@ SOFTWARE.
  */
 
 #nullable enable
+
+#if NET5_0 || NETCOREAPP3_1
+#define FAST_SPAN
+#endif
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -777,15 +782,36 @@ namespace UnmanageUtility
             public int GetSizeInBytes() => Length * sizeof(T);
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public Span<T> AsSpan() => new Span<T>((T*)Ptr, Length);
+            public Span<T> AsSpan()
+            {
+#if FAST_SPAN
+                return MemoryMarshal.CreateSpan(ref Unsafe.AsRef<T>((T*)Ptr), Length);
+#else
+                return new Span<T>((T*)Ptr, Length);
+#endif
+            }
 
             // No boundary checking. Be careful !!
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public Span<T> AsSpan(int start) => new Span<T>(((T*)Ptr) + start, Length - start);
+            public Span<T> AsSpan(int start)
+            {
+#if FAST_SPAN
+                return MemoryMarshal.CreateSpan(ref Unsafe.AsRef<T>(((T*)Ptr) + start), Length - start);
+#else
+                return new Span<T>(((T*)Ptr) + start, Length - start);
+#endif
+            }
 
             // No boundary checking. Be careful !!
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public Span<T> AsSpan(int start, int length) => new Span<T>(((T*)Ptr) + start, length);
+            public Span<T> AsSpan(int start, int length)
+            {
+#if FAST_SPAN
+                return MemoryMarshal.CreateSpan(ref Unsafe.AsRef<T>(((T*)Ptr) + start), length);
+#else
+                return new Span<T>(((T*)Ptr) + start, length);
+#endif
+            }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Dispose()
