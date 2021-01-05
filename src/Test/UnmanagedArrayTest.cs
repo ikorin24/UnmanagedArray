@@ -353,6 +353,7 @@ namespace Test
         }
 
         [Fact]
+        [Obsolete]
         public unsafe void GetPtr()
         {
             using(var array = new UnmanagedArray<long>(10)) {
