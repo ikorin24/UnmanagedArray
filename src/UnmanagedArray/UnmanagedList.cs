@@ -268,6 +268,27 @@ namespace UnmanageUtility
         /// <param name="items">items to add to list</param>
         public void AddRange(IEnumerable<T> items) => InsertRange(_length, items);
 
+        /// <summary>Increase <see cref="Count"/> by the specified count. If there is not enough <see cref="Capacity"/>, it will increase as well.</summary>
+        /// <param name="count">count to increase</param>
+        /// <param name="zeroFill">true to initialize the extended memory, otherwise false</param>
+        /// <returns><see cref="Span{T}"/> of extended memory</returns>
+        public Span<T> Extend(int count, bool zeroFill = true)
+        {
+            if(count < 0) { ThrowHelper.ArgumentOutOfRange(nameof(count)); }
+            if(count == 0) { return Span<T>.Empty; }
+
+            var margin = _array.Length - _length;
+            if(margin < count) {
+                Capacity += count - margin;
+            }
+            var newSpan = _array.AsSpan(_length, count);
+            _length += count;
+            if(zeroFill) {
+                newSpan.Clear();
+            }
+            return newSpan;
+        }
+
         /// <summary>Insert items to specified index in the list</summary>
         /// <param name="index">index to insert</param>
         /// <param name="items">items to insert</param>

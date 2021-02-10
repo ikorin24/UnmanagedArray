@@ -455,6 +455,44 @@ namespace Test
         }
 
         [Fact]
+        public void Extend()
+        {
+            foreach(var zeroFill in stackalloc[] { true, false }) {
+                using(var list = new UnmanagedList<int>(0)) {
+                    TestExtend(list, 10, zeroFill);
+                }
+                using(var list = new UnmanagedList<int>(10)) {
+                    TestExtend(list, 5, zeroFill);
+                    TestExtend(list, 5, zeroFill);
+                    TestExtend(list, 5, zeroFill);
+                }
+                using(var list = new UnmanagedList<int>(30)) {
+                    TestExtend(list, 50, zeroFill);
+                }
+            }
+
+            static void TestExtend(UnmanagedList<int> list, int exCount, bool zeroFill)
+            {
+                var count = list.Count;
+                var span = list.Extend(exCount, zeroFill);
+                Assert.True(list.Capacity >= exCount + count);
+                Assert.True(list.Count == exCount + count);
+                Assert.True(span.Length == exCount);
+                if(zeroFill) {
+                    foreach(var item in span) {
+                        Assert.True(item == default);
+                    }
+                }
+                for(int i = 0; i < span.Length; i++) {
+                    span[i] = i;
+                }
+                for(int i = 0; i < span.Length; i++) {
+                    Assert.True(span[i] == list[count + i]);
+                }
+            }
+        }
+
+        [Fact]
         public void CopyTo()
         {
             var items = Enumerable.Range(0, 100).ToArray();
