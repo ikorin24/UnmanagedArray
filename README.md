@@ -177,3 +177,9 @@ Apache License 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
 - Add `UnmanagedArray<T>.AsSpan` overload methods.
 - Package for multi target frameworks. (net48, netcoreapp3.1, net5.0, netstandard2.0, netstandard2.1)
 - Fix small bugs.
+
+### 2021/02/10 v2.1.3
+
+[![nuget](https://img.shields.io/badge/nuget-v2.1.3-FA77FF)](https://www.nuget.org/packages/UnmanagedArray/2.1.3)
+
+- Add `UnmanagedList<T>.Extend` method.
